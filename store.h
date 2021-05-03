@@ -11,7 +11,35 @@ typedef struct product {
     unsigned short stock;
     char name[NAMELENGTH];
 } product;
-
+typedef struct productArray {
+    unsigned short length;
+    product* array;
+} productArray;
+typedef struct cart {
+    unsigned short clientId;
+    productArray products;
+} cart;
+void createProductArray(productArray *pArray, unsigned short length){
+    pArray->array = (product*)calloc(length, sizeof(product));
+    pArray->length = length;
+}
+void pushProduct(productArray* pArray, product element) {
+    if ((pArray->array = (product*)realloc(pArray->array, ++pArray->length * sizeof(product)))) {
+        pArray->array[pArray->length - 1] = element;
+    } else {
+        free(pArray);
+        fprintf(stderr, "Error (re)allocating memory");
+        exit(1);
+    }
+}
+productArray* createCatalog() {
+    productArray* catalog = (productArray*)malloc(sizeof(productArray));
+    if(!catalog) exit(1);
+    catalog->length = 0;
+    catalog->array = NULL;
+    createProductArray(catalog, 1);
+    return catalog;
+}
 // -----------------------inicia productsList------------------------------
 typedef struct productListElement {
     unsigned short index;
