@@ -106,11 +106,12 @@ void loadCarts() {
     const char* fileName = "Carts";
     cart* carts = (cart*)malloc(sizeof(cart));
     if((file = fopen(fileName, "r")) == NULL) fprintf(stderr, "Error al leer el archivo");
-    unsigned short i, j;
+    unsigned short i, j, len;
     puts("Got Carts File");
 	for(i = 0; !feof(file); i++){
         fscanf(file, "%hd", &carts[i].clientId);
-        fscanf(file, "%hd", &carts[i].products.length);
+        fscanf(file, "%hd", &len);
+        createProductArray(&carts[i].products, len);
         for(j = 0; j < carts[i].products.length; j++){
             fscanf(file, "%hd", &carts[i].products.array[j].id);
             fscanf(file, "%hd", &carts[i].products.array[j].stock);
