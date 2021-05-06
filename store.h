@@ -1,9 +1,10 @@
 #define NAMELENGTH 32
+#define MAILLENGTH 32
 #define PSWDLENGTH 32
 // --------------------Useful structs---------------------------
 typedef struct client {
     unsigned short id;
-    char name[NAMELENGTH];
+    char mail[NAMELENGTH];
     char pswd[PSWDLENGTH]; /* Password */
 } client;
 typedef struct product {

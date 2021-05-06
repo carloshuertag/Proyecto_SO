@@ -14,8 +14,8 @@
 key_t clientsKey;
 key_t cartsKey;
 key_t catalogKey;
-char *names[NAMELENGTH] = {"Carlos/Fuentes/Hernandez", "Pedro/Flores/Gutierrez", "Patricia/Mercedez/Saucedo",
-    "Jesus/Ricardo/Suarez/Perez", "Alfredo/Ricardo/Dominguez", "Jose/Alfredo/Martinez/Sanchez"},
+char *mails[MAILLENGTH] = {"cfuentesh@gmail.com", "pfloresg@hotmail.com", "pmercedezs@outlook.com",
+    "jsuarezp@gmail.com", "aricardod@live.com", "jmartinezs@yahoo.com"},
     *pswds[PSWDLENGTH] = {"LobitoVeloz777", "31234327jjfj23", "contraseña", "12345678", "Alfredofeo", "JefFErzon666"};
 
 void initClients(client *clients){ 
@@ -23,28 +23,28 @@ void initClients(client *clients){
     const char *fileName = "Clients";
     if((file = fopen(fileName, "a")) == NULL) fprintf(stderr, "Error al crear el archivo");
     clients[0].id = 0;
-    strcpy(clients[0].name, names[0]);
+    strcpy(clients[0].mail, mails[0]);
     strcpy(clients[0].pswd, pswds[0]);
     clients[1].id = 1;
-    strcpy(clients[1].name, names[1]);
+    strcpy(clients[1].mail, mails[1]);
     strcpy(clients[1].pswd, pswds[1]);
     clients[2].id = 2;
-    strcpy(clients[2].name, names[2]);
+    strcpy(clients[2].mail, mails[2]);
     strcpy(clients[2].pswd, pswds[2]);
     clients[3].id = 3;
-    strcpy(clients[3].name, names[3]);
+    strcpy(clients[3].mail, mails[3]);
     strcpy(clients[3].pswd, pswds[3]);
     clients[4].id = 4;
-    strcpy(clients[4].name, names[4]);
+    strcpy(clients[4].mail, mails[4]);
     strcpy(clients[4].pswd, pswds[4]); 
     clients[5].id = 5;
-    strcpy(clients[5].name, names[5]);
+    strcpy(clients[5].mail, mails[5]);
     strcpy(clients[5].pswd, pswds[5]);
     unsigned short i = 0;
     for (i = 0; i < 6; i++){
         fprintf(file, "%hd", clients[i].id);
         fputs("\n", file);
-        fputs(clients[i].name, file);
+        fputs(clients[i].mail, file);
         fputs("\n", file);
 		fputs(clients[i].pswd, file);
         if(i != 5) fputs("\n", file);
@@ -60,7 +60,7 @@ void loadClients(){
     unsigned short i;
 	for(i = 0; !feof(file); i++){
         fscanf(file, "%hd", &clients[i].id);
-		fscanf(file, "%s", clients[i].name);
+		fscanf(file, "%s", clients[i].mail);
         fscanf(file, "%s", clients[i].pswd);
 	}
     fclose(file);
@@ -137,24 +137,28 @@ void clientLogin() {
     unsigned short i;
     int pipe;
     const char *clientFIFOPath = "ClientFIFO";
-    char *name, *pswd;
-    bool login;
+    char *mail, *pswd;
+    bool login = false;
     mkfifo(clientFIFOPath, 0666);
     while(1) {
         pipe = open(clientFIFOPath, O_RDONLY);
-        read(pipe, name, NAMELENGTH);
+        read(pipe, mail, MAILLENGTH);
         read(pipe, pswd, PSWDLENGTH);
-        printf("Client: %s, %s\n", name, pswd);
+        printf("Client: %s, %s\n", mail, pswd);
         close(pipe);
-        for(i = 0; i < 6; i++) {
-            login = !strcmp(name, names[i]) && !strcmp(pswd, pswds[i]);
-            if(login) break;
+        if(mail)
+            for(i = 0; i < 6; i++) {
+                login = !strcmp(mail, mails[i]) && !strcmp(pswd, pswds[i]);
+                if(login) break;
+            }
+        if(login) {
+            pipe = open(clientFIFOPath, O_WRONLY);
+            write(pipe, &login, 1);
+            write(pipe, &cartsKey, sizeof(key_t));
+            write(pipe, &catalogKey, sizeof(key_t));
+            close(pipe);
         }
-        pipe = open(clientFIFOPath, O_WRONLY);
-        write(pipe, &login, 1);
-        write(pipe, &cartsKey, sizeof(key_t));
-        write(pipe, &catalogKey, sizeof(key_t));
-        close(pipe);
+        sleep(2);
     }
 }
 
