@@ -71,24 +71,19 @@ void loadClients(){
     int shmid = shmget(clientsKey, sizeof(client) * 6, IPC_CREAT | 0600);
     client *shmClients = (client*)shmat(shmid, 0, 0);
     for(i = 0; i <= 5; i++) shmClients[i] = clients[i];
-    puts("Clients loaded");
     pthread_exit(NULL);
 }
 
 void *loadCatalog() {
-    puts("Loading Catalog");
     FILE *file;
     const char *fileName = "Catalog";
     productArray *catalog;
     catalog = createCatalog();
     if((file = fopen(fileName, "r")) == NULL) fprintf(stderr, "Error al leer el archivo");
-    puts("Got Catalog File");
     unsigned short i, j, len;
 	for(i = 0; !feof(file); i++){
-        puts("Loading");
         fscanf(file, "%hd", &len);
         createProductArray(&catalog[i], len);
-        printf("%hd\n", catalog[i].length);
         for(j = 0; j < catalog[i].length; j++){
             fscanf(file, "%hd", &catalog[i].array[j].id);
             fscanf(file, "%hd", &catalog[i].array[j].stock);
@@ -96,23 +91,19 @@ void *loadCatalog() {
         }
 	}
     fclose(file);
-    puts("Got Catalog from File");
     catalogKey = ftok("CatalogKey", 'b');
     int shmid = shmget(catalogKey, sizeof(productArray) * i, IPC_CREAT | 0600);
     productArray *shmCatalog = (productArray*)shmat(shmid, 0, 0);
     for(j = 0; j <= i; j++) shmCatalog[j] = catalog[j];
-    puts("Catalog loaded");
     pthread_exit(NULL);
 }
 
 void loadCarts() {
-    puts("Loading Carts");
     FILE *file;
     const char *fileName = "Carts";
     cart *carts = (cart*)malloc(sizeof(cart));
     if((file = fopen(fileName, "r")) == NULL) fprintf(stderr, "Error al leer el archivo");
     unsigned short i, j, len;
-    puts("Got Carts File");
 	for(i = 0; !feof(file); i++){
         fscanf(file, "%hd", &carts[i].clientId);
         fscanf(file, "%hd", &len);
@@ -124,12 +115,10 @@ void loadCarts() {
         }
 	}
     fclose(file);
-    puts("Got Carts from File");
     cartsKey = ftok("CartsKey", 'a');
     int shmid = shmget(cartsKey, sizeof(cart) * i, IPC_CREAT | 0600);
     cart *shmCarts = (cart*)shmat(shmid, 0, 0);
     for(j = 0; j <= i; j++) shmCarts[j] = carts[j];
-    puts("Carts loaded");
     pthread_exit(NULL);
 }
 
