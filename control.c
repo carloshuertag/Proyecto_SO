@@ -11,7 +11,7 @@
 #include <sys/stat.h>
 #include "store.h"
 
-key_t clientsKey, cartsKey, catalogKey, controlKey;
+key_t cartsSmphrKey, catalogSmphrKey;
 char *mails[MAILLENGTH] = {"cfuentesh@gmail.com", "pfloresg@hotmail.com", "pmercedezs@outlook.com",
     "jsuarezp@gmail.com", "aricardod@live.com", "jmartinezs@yahoo.com"},
     *pswds[PSWDLENGTH] = {"LobitoVeloz777", "31234327jjfj23", "contraseña", "12345678", "Alfredofeo", "JefFErzon666"};
@@ -65,7 +65,7 @@ void loadClients(){
     if(i == 1) {
         initClients(clients);
     }
-    clientsKey = ftok("ClientsKey", 'c');
+    key_t clientsKey = ftok("ClientsKey", 'c');
     int shmid = shmget(clientsKey, sizeof(client) * 6, IPC_CREAT | 0600);
     client *shmClients = (client*)shmat(shmid, 0, 0);
     for(i = 0; i <= 5; i++) shmClients[i] = clients[i];
@@ -89,7 +89,7 @@ void *loadCatalog() {
         }
 	}
     fclose(file);
-    catalogKey = ftok("CatalogKey", 'b');
+    key_t catalogKey = ftok("CatalogKey", 'b');
     int shmid = shmget(catalogKey, sizeof(productArray) * i, IPC_CREAT | 0600);
     productArray *shmCatalog = (productArray*)shmat(shmid, 0, 0);
     for(j = 0; j <= i; j++) shmCatalog[j] = catalog[j];
@@ -113,7 +113,7 @@ void loadCarts() {
         }
 	}
     fclose(file);
-    cartsKey = ftok("CartsKey", 'a');
+    key_t cartsKey = ftok("CartsKey", 'a');
     int shmid = shmget(cartsKey, sizeof(cart) * i, IPC_CREAT | 0600);
     cart *shmCarts = (cart*)shmat(shmid, 0, 0);
     for(j = 0; j <= i; j++) shmCarts[j] = carts[j];
@@ -122,7 +122,7 @@ void loadCarts() {
 
 void clientLogin() {
     unsigned char i;
-    controlKey = ftok("ControlKey", 'o');
+    key_t controlKey = ftok("ControlKey", 'o');
     int shmid = shmget(controlKey, sizeof(loginDTS), IPC_CREAT | 0600);
     loginDTS *loginBuffer = (loginDTS*)shmat(shmid, 0, 0);
     loginBuffer->credentials.id = loginBuffer->login = loginBuffer->cartsKey = loginBuffer->catalogKey = 0;
@@ -132,8 +132,8 @@ void clientLogin() {
         for(i = 0; i < 6; i++) {
             loginBuffer->login = !strcmp(loginBuffer->credentials.mail, mails[i]) && !strcmp(loginBuffer->credentials.pswd, pswds[i]);
             if(loginBuffer->login){
-                loginBuffer->cartsKey = cartsKey;
-                loginBuffer->catalogKey = catalogKey;
+                loginBuffer->cartsKey = cartsSmphrKey;
+                loginBuffer->catalogKey = catalogSmphrKey;
                 strcpy(loginBuffer->credentials.mail, "");
                 strcpy(loginBuffer->credentials.pswd, "");
                 break;
@@ -145,6 +145,8 @@ void clientLogin() {
 
 int main(){
     pthread_t clientsThread, catalogThread, cartsThread, controlThread;
+    cartsSmphrKey = ftok("CartsSmphr", 'm');
+    catalogSmphrKey = ftok("CatalogSmphr", 'n');
     pthread_create(&clientsThread, NULL, (void*)loadClients, NULL);
     pthread_join(clientsThread, NULL);
     pthread_create(&catalogThread, NULL, (void*)loadCatalog, NULL);
