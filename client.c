@@ -13,26 +13,23 @@
 #include "store.h"
 
 const char *clientFIFOPath = "ClientFIFO";
-key_t cartsKey;
-key_t catalogKey;
+key_t cartsKey, catalogKey, controlKey;
 int loginPipe;
-bool logged;
+bool logged = false;
 
 void login(const char *mail, const char *pswd) {
-    mkfifo(clientFIFOPath, 0666);
-    loginPipe = open(clientFIFOPath, O_WRONLY);
-    write(loginPipe, mail, NAMELENGTH);
-    write(loginPipe, pswd, PSWDLENGTH);
-    close(loginPipe);
-    loginPipe = open(clientFIFOPath, O_RDONLY);
-    read(loginPipe, &logged, 1);
-    read(loginPipe, &cartsKey, sizeof(key_t));
-    read(loginPipe, &catalogKey, sizeof(key_t));
-    close(loginPipe);
+    controlKey = ftok("ControlKey", 'o');
+    int shmid = shmget(controlKey, sizeof(loginDTS), IPC_CREAT | 0600);
+    loginDTS *loginBuffer = (loginDTS*)shmat(shmid, 0, 0);
+    strcpy(loginBuffer->credentials.mail, mail);
+    strcpy(loginBuffer->credentials.pswd, pswd);
+    sleep(2);
+    logged = loginBuffer->login;
+    cartsKey = loginBuffer->cartsKey;
+    catalogKey = loginBuffer->catalogKey;
 }
 
 int main() {
-    unsigned short i;
     char mail[MAILLENGTH], pswd[PSWDLENGTH];
     printf("Introduzca su correo electrónico: ");
     fflush(stdin);
@@ -42,7 +39,7 @@ int main() {
     scanf("%s", pswd);
     printf("LOGING IN %s, %s", mail, pswd);
     login(mail, pswd);
-    do{
+    while(!logged){
         printf("Usuario o contraseña incorrectos.\n\nIntroduzca su correo electrónico:");
         fflush(stdin);
         scanf("%s", mail);
@@ -51,6 +48,6 @@ int main() {
         scanf("%s", pswd);
         printf("LOGING IN %s, %s", mail, pswd);
         login(mail, pswd);
-    } while(!logged);
+    }
     return 0;
 }

@@ -11,9 +11,7 @@
 #include <sys/stat.h>
 #include "store.h"
 
-key_t clientsKey;
-key_t cartsKey;
-key_t catalogKey;
+key_t clientsKey, cartsKey, catalogKey, controlKey;
 char *mails[MAILLENGTH] = {"cfuentesh@gmail.com", "pfloresg@hotmail.com", "pmercedezs@outlook.com",
     "jsuarezp@gmail.com", "aricardod@live.com", "jmartinezs@yahoo.com"},
     *pswds[PSWDLENGTH] = {"LobitoVeloz777", "31234327jjfj23", "contraseña", "12345678", "Alfredofeo", "JefFErzon666"};
@@ -123,42 +121,37 @@ void loadCarts() {
 }
 
 void clientLogin() {
-    unsigned short i;
-    int pipe;
-    const char *clientFIFOPath = "ClientFIFO";
-    char *mail, *pswd;
-    bool login = false;
-    mkfifo(clientFIFOPath, 0666);
+    unsigned char i;
+    controlKey = ftok("ControlKey", 'o');
+    int shmid = shmget(controlKey, sizeof(loginDTS), IPC_CREAT | 0600);
+    loginDTS *loginBuffer = (loginDTS*)shmat(shmid, 0, 0);
+    loginBuffer->credentials.id = loginBuffer->login = loginBuffer->cartsKey = loginBuffer->catalogKey = 0;
+    strcpy(loginBuffer->credentials.mail, "");
+    strcpy(loginBuffer->credentials.pswd, "");
     while(1) {
-        pipe = open(clientFIFOPath, O_RDONLY);
-        read(pipe, mail, MAILLENGTH);
-        read(pipe, pswd, PSWDLENGTH);
-        printf("Client: %s, %s\n", mail, pswd);
-        close(pipe);
-        if(mail)
-            for(i = 0; i < 6; i++) {
-                login = !strcmp(mail, mails[i]) && !strcmp(pswd, pswds[i]);
-                if(login) break;
+        for(i = 0; i < 6; i++) {
+            loginBuffer->login = !strcmp(loginBuffer->credentials.mail, mails[i]) && !strcmp(loginBuffer->credentials.pswd, pswds[i]);
+            if(loginBuffer->login){
+                loginBuffer->cartsKey = cartsKey;
+                loginBuffer->catalogKey = catalogKey;
+                strcpy(loginBuffer->credentials.mail, "");
+                strcpy(loginBuffer->credentials.pswd, "");
+                break;
             }
-        if(login) {
-            pipe = open(clientFIFOPath, O_WRONLY);
-            write(pipe, &login, 1);
-            write(pipe, &cartsKey, sizeof(key_t));
-            write(pipe, &catalogKey, sizeof(key_t));
-            close(pipe);
         }
-        sleep(2);
+        sleep(1);
     }
 }
 
 int main(){
-    pthread_t clientsThread, catalogThread, cartsThread;
+    pthread_t clientsThread, catalogThread, cartsThread, controlThread;
     pthread_create(&clientsThread, NULL, (void*)loadClients, NULL);
     pthread_join(clientsThread, NULL);
     pthread_create(&catalogThread, NULL, (void*)loadCatalog, NULL);
     pthread_join(catalogThread, NULL);
     pthread_create(&cartsThread, NULL, (void*)loadCarts, NULL);
     pthread_join(cartsThread, NULL);
-    clientLogin();
+    pthread_create(&controlThread, NULL, (void*)clientLogin, NULL);
+    pthread_join(controlThread, NULL);
     return 0;
 }

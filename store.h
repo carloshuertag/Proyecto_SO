@@ -41,6 +41,13 @@ productArray* createCatalog() {
     createProductArray(catalog, 1);
     return catalog;
 }
+// --------login IPC----------
+typedef struct loginDTS {
+    client credentials;
+    bool login;
+    key_t cartsKey;
+    key_t catalogKey;
+} loginDTS;
 // -----------------------inicia productsList------------------------------
 typedef struct productListElement {
     unsigned short index;
