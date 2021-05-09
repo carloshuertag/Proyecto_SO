@@ -133,12 +133,14 @@ void clientLogin() {
     controlKey = ftok("ControlKey", 65);
     msgId = msgget(controlKey, 0666 | IPC_CREAT);
     printf("FLAG: Message queue created");
+    
     msgrcv(msgId, &msgB, sizeof(msgB), 1, 0);
+    /*
     msgB.msgType = 2;
     strcpy(msgB.msgMail, "Logged");
     msgsnd(msgId, &msgB, sizeof(msgB), 0);
     msgctl(msgId, IPC_RMID, NULL);
-    /*do {
+    do {
         msgrcv(msgId, &msgB, sizeof(msgB), 1, 0);
         printf("Login attempt User %s", msgB.msgMail);
         for(i = 0; i < 6; i++) {
