@@ -20,6 +20,7 @@ typedef struct cart {
     unsigned short clientId;
     productArray products;
 } cart;
+//----------------productArray functions-------------------
 void createProductArray(productArray *pArray, unsigned short length){
     pArray->array = (product*)calloc(length, sizeof(product));
     pArray->length = length;
@@ -41,6 +42,15 @@ productArray* createCatalog() {
     createProductArray(catalog, 1);
     return catalog;
 }
+// --------login IPC---------
+typedef struct msgBuffer {
+    long msgType;
+    char msgMail[MAILLENGTH];
+    //char msgPswd[PSWDLENGTH];
+    //bool msgLogin;
+    //key_t msgCartsKey;
+    //key_t msgCatalogKey;
+} msgBuffer;
 // -----------------------inicia productsList------------------------------
 typedef struct productListElement {
     unsigned short index;

@@ -9,11 +9,13 @@
 #include <sys/shm.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/msg.h>
 #include "store.h"
 
 key_t clientsKey;
 key_t cartsKey;
 key_t catalogKey;
+key_t controlKey;
 char *mails[MAILLENGTH] = {"cfuentesh@gmail.com", "pfloresg@hotmail.com", "pmercedezs@outlook.com",
     "jsuarezp@gmail.com", "aricardod@live.com", "jmartinezs@yahoo.com"},
     *pswds[PSWDLENGTH] = {"LobitoVeloz777", "31234327jjfj23", "contraseña", "12345678", "Alfredofeo", "JefFErzon666"};
@@ -71,6 +73,7 @@ void loadClients(){
     int shmid = shmget(clientsKey, sizeof(client) * 6, IPC_CREAT | 0600);
     client *shmClients = (client*)shmat(shmid, 0, 0);
     for(i = 0; i <= 5; i++) shmClients[i] = clients[i];
+    printf("CLIENTS LOADED");
     pthread_exit(NULL);
 }
 
@@ -123,32 +126,35 @@ void loadCarts() {
 }
 
 void clientLogin() {
-    unsigned short i;
-    int pipe;
-    const char *clientFIFOPath = "ClientFIFO";
-    char *mail, *pswd;
+    int msgId;
     bool login = false;
-    mkfifo(clientFIFOPath, 0666);
-    while(1) {
-        pipe = open(clientFIFOPath, O_RDONLY);
-        read(pipe, mail, MAILLENGTH);
-        read(pipe, pswd, PSWDLENGTH);
-        printf("Client: %s, %s\n", mail, pswd);
-        close(pipe);
-        if(mail)
-            for(i = 0; i < 6; i++) {
-                login = !strcmp(mail, mails[i]) && !strcmp(pswd, pswds[i]);
-                if(login) break;
-            }
-        if(login) {
-            pipe = open(clientFIFOPath, O_WRONLY);
-            write(pipe, &login, 1);
-            write(pipe, &cartsKey, sizeof(key_t));
-            write(pipe, &catalogKey, sizeof(key_t));
-            close(pipe);
+    msgBuffer msgB;
+    unsigned int i;
+    controlKey = ftok("ControlKey", 65);
+    msgId = msgget(controlKey, 0666 | IPC_CREAT);
+    printf("FLAG: Message queue created");
+    msgrcv(msgId, &msgB, sizeof(msgB), 1, 0);
+    msgB.msgType = 2;
+    strcpy(msgB.msgMail, "Logged");
+    msgsnd(msgId, &msgB, sizeof(msgB), 0);
+    msgctl(msgId, IPC_RMID, NULL);
+    /*do {
+        msgrcv(msgId, &msgB, sizeof(msgB), 1, 0);
+        printf("Login attempt User %s", msgB.msgMail);
+        for(i = 0; i < 6; i++) {
+            //login = !strcmp(msgB.msgMail, mails[i]) && !strcmp(msgB.msgPswd, pswds[i]);
+            login = !strcmp(msgB.msgMail, mails[i]);
+            if(login) break;
         }
-        sleep(2);
-    }
+        msgB.msgType = 2;
+        if(login) {
+            strcpy(msgB.msgMail, "Logged");
+            //msgB.msgLogin = true;
+            //msgB.msgCartsKey = cartsKey;
+            //msgB.msgCatalogKey = catalogKey;
+        }
+        msgsnd(msgId, &msgB, sizeof(msgB), 0);
+    } while (!login);*/
 }
 
 int main(){
