@@ -76,6 +76,15 @@ void initCarts(cart* carts) {
 	fclose(file);
 }
 
+void initCatalog(productArray *catalog) {
+    FILE *file;
+    const char *fileName = "Catalog";
+    if((file = fopen(fileName, "a")) == NULL) fprintf(stderr, "Error al crear el archivo");
+    fprintf(file, "%hd", catalog->length);
+    fputs("\n", file);
+    fclose(file);
+}
+
 void loadClients(){
     FILE *file;
     const char *fileName = "Clients";
@@ -113,6 +122,7 @@ void *loadCatalog() {
         }
 	}
     fclose(file);
+    if(i == 1) initCatalog(catalog);
     key_t catalogKey = ftok("CatalogKey", 'b');
     int shmid = shmget(catalogKey, sizeof(productArray), IPC_CREAT | 0600);
     productArray *shmCatalog = (productArray*)shmat(shmid, 0, 0);

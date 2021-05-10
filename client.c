@@ -44,8 +44,13 @@ void showCatalog() {
                     catalog->array[i].id, catalog->array[i].name);
 }
 
+void updateCarts() {
+
+}
+
 void addToCart(unsigned short pId, unsigned short quantity){
-    
+
+    updateCarts();
 }
 
 void getCart() {
@@ -70,7 +75,7 @@ int main() {
     unsigned char opc;
     char pushProd;
     char mail[MAILLENGTH], pswd[PSWDLENGTH];
-    printf("Introduzca su correo electrónico: ");
+    printf("\nBienvenido estimado cliente\n\nIntroduzca su correo electrónico: ");
     fflush(stdin);
     scanf("%s", mail);
     printf("Introduzca su contraseña: ");
