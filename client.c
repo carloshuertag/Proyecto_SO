@@ -3,13 +3,11 @@
 #include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
-#include <pthread.h>
 #include <fcntl.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include<ctype.h>
 #include "store.h"
 
 key_t cartsSmphrKey, catalogSmphrKey, controlKey;
