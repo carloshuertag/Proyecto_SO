@@ -22,17 +22,44 @@ void getCatalog() {
     isEmptyCatalog = catalog->length == 0;
 }
 
+void updateCatalog() {
+
+}
+
 void addProduct(unsigned short sku, const char *name, unsigned short stock) {
     product p;
+    p.id = sku;
+    strcpy(p.name, name);
+    p.stock = stock;
     pushProduct(catalog, p);
+    updateCatalog();
 }
 
 void getProduct(unsigned short sku) {
-
+    unsigned short i;
+    bool found = false;
+    for(i = 0; i < catalog->length; i++)
+        if(catalog->array[i].id == sku){
+            printf("\nProducto encontrado:\nNúmero: %d\tNombre del producto: %s\tExistencia: %d\n",
+                    catalog->array[i].id, catalog->array[i].name, catalog->array[i].stock);
+            found = true;
+            return;
+        }
+    if(!found) printf("\nEl producto no se encuentra en el catálogo\n");
 }
 
 void addStock(unsigned short sku, unsigned short stock){
-
+    unsigned short i;
+    bool found = false;
+    for(i = 0; i < catalog->length; i++)
+        if(catalog->array[i].id == sku){
+            catalog->array[i].stock = stock;
+            printf("\nSe han agregado las existencias:\nNúmero: %d\tNombre del producto: %s\tExistencia: %d\n",
+                    catalog->array[i].id, catalog->array[i].name, catalog->array[i].stock);
+            found = true;
+            return;
+        }
+    if(!found) printf("\nEl producto no se encuentra en el catálogo\n");
 }
 
 int main() {

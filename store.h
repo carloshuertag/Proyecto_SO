@@ -1,7 +1,7 @@
 #define NAMELENGTH 32
 #define MAILLENGTH 32
 #define PSWDLENGTH 32
-// -------Useful structs----------
+// -------Useful structs---------
 typedef struct client {
     unsigned short id;
     char mail[NAMELENGTH];
@@ -48,6 +48,8 @@ typedef struct loginDTS {
     key_t cartsKey;
     key_t catalogKey;
 } loginDTS;
+
+
 /*
 // -----------------------inicia productsList------------------------------
 typedef struct productListElement {
