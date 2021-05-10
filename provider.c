@@ -12,18 +12,20 @@
 
 key_t cartsSmphrKey, catalogSmphrKey;
 bool isEmptyCatalog;
-productArray *catalog;
+productArray *catalog, aux;
 
 void getCatalog() {
     unsigned short i;
     key_t catalogKey = ftok("CatalogKey", 'b');
     int shmid = shmget(catalogKey, sizeof(productArray), IPC_CREAT | 0600);
     catalog = (productArray*)shmat(shmid, 0, 0);
+    createProductArray(&aux, 0);
+    aux = *catalog;
     isEmptyCatalog = catalog->length == 0;
 }
 
 void updateCatalog() {
-
+    *catalog = aux;
 }
 
 void addProduct(unsigned short sku, const char *name, unsigned short stock) {
@@ -31,7 +33,7 @@ void addProduct(unsigned short sku, const char *name, unsigned short stock) {
     p.id = sku;
     strcpy(p.name, name);
     p.stock = stock;
-    pushProduct(catalog, p);
+    pushProduct(&aux, p);
     updateCatalog();
 }
 
