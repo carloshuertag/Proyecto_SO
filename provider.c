@@ -25,6 +25,7 @@ void getCatalog() {
 }
 
 void updateCatalog() {
+    if(isEmptyCatalog) isEmptyCatalog = false;
     *catalog = aux;
 }
 
@@ -108,6 +109,8 @@ int main() {
                 break;
         }
         printf("\n¿Desea realizar otra operación? (S/N)\n");
+        fflush(stdin);
+        scanf("%c", &cont);
     } while(cont == 's' || cont == 'S');
     return 0;
 }
