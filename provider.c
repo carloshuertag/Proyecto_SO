@@ -72,6 +72,7 @@ int main() {
     printf("\nBienvenido estimado proveedor\n");
     do{
         printf("\nLas operaciones disponibles son:\n0 Buscar producto\n1 Agregar producto\n2 Agregar existencia\nIngrese el número de la operación deseada: ");
+        fflush(stdin);
         scanf("%hd", &opc);
         switch(opc){
             case 0:
@@ -86,6 +87,7 @@ int main() {
                     printf("\nIngresa el sku del producto: ");
                     scanf("%hd", &sku);
                     printf("\nIngresa el nombre del producto: ");
+                    fflush(stdin);
                     scanf("%s", pName);
                     printf("\nIngresa la cantidad de existencia del producto: ");
                     scanf("%hd", &stock);
@@ -106,6 +108,8 @@ int main() {
                 break;
         }
         printf("\n¿Desea realizar otra operación? (S/N)\n");
+        fflush(stdin);
+        scanf("%c", &cont);
     } while(cont == 's' || cont == 'S');
     return 0;
 }

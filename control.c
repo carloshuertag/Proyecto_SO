@@ -133,7 +133,7 @@ void *loadCatalog() {
 void loadCarts() {
     FILE *file;
     const char *fileName = "Carts";
-    cart *carts = (cart*)malloc(sizeof(cart));
+    cart carts[6];
     if((file = fopen(fileName, "r")) == NULL) fprintf(stderr, "Error al leer el archivo");
     unsigned short i, j, len;
 	for(i = 0; !feof(file); i++){
@@ -147,11 +147,14 @@ void loadCarts() {
         }
 	}
     fclose(file);
+    printf("FLAG");
     if(i == 1) initCarts(carts);
     key_t cartsKey = ftok("CartsKey", 'a');
-    int shmid = shmget(cartsKey, sizeof(cart) * i, IPC_CREAT | 0600);
+    int shmid = shmget(cartsKey, sizeof(cart) * 6, IPC_CREAT | 0600);
     cart *shmCarts = (cart*)shmat(shmid, 0, 0);
-    for(j = 0; j <= i; j++) shmCarts[j] = carts[j];
+    printf("Shared memory is supposed to be assigned");
+    for(j = 0; j < 6; j++)
+        shmCarts[j] = carts[j];
     pthread_exit(NULL);
 }
 
@@ -180,6 +183,7 @@ void clientLogin() {
 }
 
 int main(){
+    printf("HELLO");
     pthread_t clientsThread, catalogThread, cartsThread, controlThread;
     cartsSmphrKey = ftok("CartsSmphr", 'm');
     catalogSmphrKey = ftok("CatalogSmphr", 'n');
