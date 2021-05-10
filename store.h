@@ -21,7 +21,7 @@ typedef struct cart {
     productArray products;
 } cart;
 void createProductArray(productArray *pArray, unsigned short length){
-    pArray->array = (product*)calloc(length, sizeof(product));
+    pArray->array = (length == 0) ? (product*)malloc(sizeof(product)) :  (product*)calloc(length, sizeof(product));
     pArray->length = length;
 }
 void pushProduct(productArray* pArray, product element) {
@@ -38,7 +38,7 @@ productArray* createCatalog() {
     if(!catalog) exit(1);
     catalog->length = 0;
     catalog->array = NULL;
-    createProductArray(catalog, 1);
+    createProductArray(catalog, 0);
     return catalog;
 }
 // --------login IPC----------
