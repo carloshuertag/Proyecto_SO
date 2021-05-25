@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ipc.h>
-#include<sys/sem.h>
+#include <sys/sem.h>
 #include <sys/shm.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -47,6 +47,7 @@ void showCatalog()
         if (catalog->array[i].stock > 0)
             printf("Número: %d\tNombre del producto: %s\n",
                     catalog->array[i].id, catalog->array[i].name);
+    shmdt(catalog);
 }
 
 void updateCarts()

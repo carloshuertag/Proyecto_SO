@@ -18,17 +18,21 @@ productArray *catalog, aux;
 
 void getCatalog() {
     unsigned short i;
+    down(catalogSmphr);
     key_t catalogKey = ftok("CatalogKey", 'b');
     int shmid = shmget(catalogKey, sizeof(productArray), IPC_CREAT | 0600);
     catalog = (productArray*)shmat(shmid, 0, 0);
     createProductArray(&aux, 0);
     aux = *catalog;
+    up(catalogSmphr);
     isEmptyCatalog = catalog->length == 0;
 }
 
 void updateCatalog() {
     if(isEmptyCatalog) isEmptyCatalog = false;
+    down(catalogSmphr);
     *catalog = aux;
+    up(catalogSmphr);
 }
 
 void addProduct(unsigned short sku, const char *name, unsigned short stock) {
@@ -43,6 +47,7 @@ void addProduct(unsigned short sku, const char *name, unsigned short stock) {
 void getProduct(unsigned short sku) {
     unsigned short i;
     bool found = false;
+    down(catalogSmphr);
     for(i = 0; i < catalog->length; i++)
         if(catalog->array[i].id == sku){
             printf("\nProducto encontrado:\nNúmero: %d\tNombre del producto: %s\tExistencia: %d\n",
@@ -50,12 +55,14 @@ void getProduct(unsigned short sku) {
             found = true;
             return;
         }
+    up(catalogSmphr);
     if(!found) printf("\nEl producto no se encuentra en el catálogo\n");
 }
 
 void addStock(unsigned short sku, unsigned short stock){
     unsigned short i;
     bool found = false;
+    down(catalogSmphr);
     for(i = 0; i < catalog->length; i++)
         if(catalog->array[i].id == sku){
             catalog->array[i].stock = stock;
@@ -64,6 +71,7 @@ void addStock(unsigned short sku, unsigned short stock){
             found = true;
             return;
         }
+    up(catalogSmphr);
     if(!found) printf("\nEl producto no se encuentra en el catálogo\n");
 }
 

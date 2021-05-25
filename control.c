@@ -6,7 +6,7 @@
 #include <pthread.h>
 #include <fcntl.h>
 #include <sys/ipc.h>
-#include<sys/sem.h>
+#include <sys/sem.h>
 #include <sys/shm.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -113,13 +113,14 @@ void loadClients()
         fscanf(file, "%s", clients[i].pswd);
     }
     fclose(file);
-    if (i == 1)
+    if (i <= 1)
         initClients(clients);
     key_t clientsKey = ftok("ClientsKey", 'c');
     int shmid = shmget(clientsKey, sizeof(client) * 6, IPC_CREAT | 0600);
     client *shmClients = (client *)shmat(shmid, 0, 0);
-    for (i = 0; i <= 5; i++)
+    for (i = 0; i < 6; i++)
         shmClients[i] = clients[i];
+    shmdt(shmClients);
     pthread_exit(NULL);
 }
 
@@ -144,13 +145,14 @@ void *loadCatalog()
         }
     }
     fclose(file);
-    if (i == 1)
+    if (i <= 1)
         initCatalog(catalog);
     key_t catalogKey = ftok("CatalogKey", 'b');
     int shmid = shmget(catalogKey, sizeof(productArray), IPC_CREAT | 0600);
     productArray *shmCatalog = (productArray *)shmat(shmid, 0, 0);
     for (i = 0; i < shmCatalog->length; i++)
         shmCatalog->array[i] = catalog->array[i];
+    shmdt(shmCatalog);
     pthread_exit(NULL);
 }
 
@@ -175,13 +177,14 @@ void loadCarts()
         }
     }
     fclose(file);
-    if (i == 1)
+    if (i <= 1)
         initCarts(carts);
     key_t cartsKey = ftok("CartsKey", 'a');
     int shmid = shmget(cartsKey, sizeof(cart) * i, IPC_CREAT | 0600);
     cart *shmCarts = (cart *)shmat(shmid, 0, 0);
     for (j = 0; j < i; j++)
         shmCarts[j] = carts[j];
+    shmdt(shmCarts);
     pthread_exit(NULL);
 }
 
