@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ipc.h>
-#include<sys/sem.h>
+#include <sys/sem.h>
 #include <sys/shm.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -29,6 +29,12 @@ void login(const char *mail, const char *pswd)
     cId = loginBuffer->credentials.id;
     cartsSmphrKey = loginBuffer->cartsKey;
     catalogSmphrKey = loginBuffer->catalogKey;
+}
+
+void initSmphrs()
+{
+    cartsSmphr = semget(cartsSmphrKey, 1, IPC_CREAT | 0644);
+    catalogSmphr = semget(catalogSmphrKey, 1, IPC_CREAT | 0644);
 }
 
 void showCatalog()
@@ -102,8 +108,7 @@ int main()
         scanf("%s", pswd);
         login(mail, pswd);
     }
-    cartsSmphr = semget(cartsSmphrKey, 1, IPC_CREAT | 0644);
-    catalogSmphr = semget(catalogSmphrKey, 1, IPC_CREAT | 0644);
+    initSmphrs();
     showCatalog();
     getCart();
     printf("¿Desea agregar productos a su carrito? (S/N)\n");
