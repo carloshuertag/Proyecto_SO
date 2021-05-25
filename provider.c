@@ -5,12 +5,14 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ipc.h>
+#include <sys/sem.h>
 #include <sys/shm.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "store.h"
 
-key_t cartsSmphrKey, catalogSmphrKey;
+key_t catalogSmphrKey;
+semaphore catalogSmphr;
 bool isEmptyCatalog;
 productArray *catalog, aux;
 
@@ -69,8 +71,8 @@ int main() {
     unsigned short opc, stock, sku;
     char cont;
     char pName[NAMELENGTH];
-    cartsSmphrKey = ftok("CartsSmphr", 'm');
     catalogSmphrKey = ftok("CatalogSmphr", 'n');
+    catalogSmphr = semget(catalogSmphrKey, 1, IPC_CREAT | 0644);
     getCatalog();
     printf("\nBienvenido estimado proveedor\n");
     do{

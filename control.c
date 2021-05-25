@@ -6,15 +6,18 @@
 #include <pthread.h>
 #include <fcntl.h>
 #include <sys/ipc.h>
+#include<sys/sem.h>
 #include <sys/shm.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "store.h"
 
 key_t cartsSmphrKey, catalogSmphrKey;
+semaphore cartsSmphr, catalogSmphr;
 char *mails[MAILLENGTH] = {"cfuentesh@gmail.com", "pfloresg@hotmail.com", "pmercedezs@outlook.com",
-                           "jsuarezp@gmail.com", "aricardod@live.com", "jmartinezs@yahoo.com"},
-     *pswds[PSWDLENGTH] = {"LobitoVeloz777", "31234327jjfj23", "contraseña", "12345678", "Alfredofeo", "JefFErzon666"};
+                            "jsuarezp@gmail.com", "aricardod@live.com", "jmartinezs@yahoo.com"},
+     *pswds[PSWDLENGTH] = {"LobitoVeloz777", "31234327jjfj23", "contraseña", "12345678", "Alfredofeo",
+                            "JefFErzon666"};
 
 void initClients(client *clients)
 {
@@ -191,10 +194,12 @@ void clientLogin()
     loginBuffer->credentials.id = loginBuffer->login = loginBuffer->cartsKey = loginBuffer->catalogKey = 0;
     strcpy(loginBuffer->credentials.mail, "");
     strcpy(loginBuffer->credentials.pswd, "");
-    while (1){
+    while (1)
+    {
         for (i = 0; i < 6; i++)
         {
-            loginBuffer->login = !strcmp(loginBuffer->credentials.mail, mails[i]) && !strcmp(loginBuffer->credentials.pswd, pswds[i]);
+            loginBuffer->login = !strcmp(loginBuffer->credentials.mail, mails[i])
+                                    && !strcmp(loginBuffer->credentials.pswd, pswds[i]);
             if (loginBuffer->login)
             {
                 loginBuffer->credentials.id = i;
@@ -213,7 +218,9 @@ int main()
 {
     pthread_t clientsThread, catalogThread, cartsThread, controlThread;
     cartsSmphrKey = ftok("CartsSmphr", 'm');
+    cartsSmphr = semaphore_init(catalogSmphrKey, 1);
     catalogSmphrKey = ftok("CatalogSmphr", 'n');
+    catalogSmphr = semaphore_init(catalogSmphrKey, 1);
     pthread_create(&clientsThread, NULL, (void *)loadClients, NULL);
     pthread_join(clientsThread, NULL);
     pthread_create(&catalogThread, NULL, (void *)loadCatalog, NULL);

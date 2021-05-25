@@ -1,54 +1,96 @@
 #define NAMELENGTH 32
 #define MAILLENGTH 32
 #define PSWDLENGTH 32
-// -------Useful structs---------
-typedef struct client {
+
+// ----Semaphores----
+typedef int semaphore;
+
+int semaphore_init(key_t key, int value) {
+    int semid = semget(key, 1, IPC_CREAT | 0644);
+    if(semid == -1){
+        fprintf(stderr, "Error al crear semáforo");
+        exit(1);
+    }
+    semctl(semid, 0, SETVAL, value);
+    return semid;
+}
+
+void down(int semid) {
+    struct sembuf op_p[] = {0, -1, 0};
+    semop(semid, op_p, 1);
+}
+
+void up(int semid) {
+    struct sembuf op_v[] = {0, +1, 0};
+    semop(semid,op_v, 1);
+}
+
+// -----Useful structs-----
+typedef struct client
+{
     unsigned short id;
     char mail[NAMELENGTH];
     char pswd[PSWDLENGTH]; /* Password */
 } client;
-typedef struct product {
+
+typedef struct product
+{
     unsigned short id;
     unsigned short stock;
     char name[NAMELENGTH];
 } product;
-typedef struct productArray {
+
+typedef struct productArray
+{
     unsigned short length;
-    product* array;
+    product *array;
 } productArray;
-typedef struct cart {
+
+typedef struct cart
+{
     unsigned short clientId;
     productArray products;
 } cart;
-void createProductArray(productArray *pArray, unsigned short length){
-    pArray->array = (length == 0) ? (product*)malloc(sizeof(product)) :  (product*)calloc(length, sizeof(product));
+
+void createProductArray(productArray *pArray, unsigned short length)
+{
+    pArray->array = (length == 0) ? (product *)malloc(sizeof(product)) : (product *)calloc(length, sizeof(product));
     pArray->length = length;
 }
-void pushProduct(productArray* pArray, product element) {
-    if ((pArray->array = (product*)realloc(pArray->array, ++pArray->length * sizeof(product)))) {
+
+void pushProduct(productArray *pArray, product element)
+{
+    if ((pArray->array = (product *)realloc(pArray->array, ++pArray->length * sizeof(product))))
+    {
         pArray->array[pArray->length - 1] = element;
-    } else {
+    }
+    else
+    {
         free(pArray);
         fprintf(stderr, "Error (re)allocating memory");
         exit(1);
     }
 }
-productArray* createCatalog() {
-    productArray* catalog = (productArray*)malloc(sizeof(productArray));
-    if(!catalog) exit(1);
+
+productArray *createCatalog()
+{
+    productArray *catalog = (productArray *)malloc(sizeof(productArray));
+    if (!catalog)
+        exit(1);
     catalog->length = 0;
     catalog->array = NULL;
     createProductArray(catalog, 0);
     return catalog;
 }
+
 // --------login IPC----------
-typedef struct loginDTS {
+typedef struct loginDTS
+{
     client credentials;
     bool login;
     key_t cartsKey;
     key_t catalogKey;
 } loginDTS;
-
 
 /*
 // -----------------------inicia productsList------------------------------
