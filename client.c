@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <sys/ipc.h>
 #include <sys/sem.h>
+#include <sys/msg.h>
 #include <sys/shm.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -19,21 +20,34 @@ bool logged = false;
 
 void login(const char *mail, const char *pswd)
 {
-    controlKey = ftok("ControlKey", 'o');
-    int shmid = shmget(controlKey, sizeof(loginDTS), IPC_CREAT | 0600);
-    loginDTS *loginBuffer = (loginDTS *)shmat(shmid, 0, 0);
-    strcpy(loginBuffer->credentials.mail, mail);
-    strcpy(loginBuffer->credentials.pswd, pswd);
-    sleep(1);
-    logged = loginBuffer->login;
-    cId = loginBuffer->credentials.id;
-    cartsSmphrKey = loginBuffer->cartsKey;
-    catalogSmphrKey = loginBuffer->catalogKey;
+    mesg_buffer message = {1, {false, 0, 0, 0}};
+    mesg_buffer2 message2;
+    key_t controlKey2 = ftok("ControlKey", 'p'), controlKey;
+    int msgid, msgid2;
+    msgid2 = msgget(controlKey2, 0666 | IPC_CREAT);
+    message2.mesg_type = 1;
+    strcpy(message2.mesg_body.credentials.mail, mail);
+    strcpy(message2.mesg_body.credentials.pswd, pswd);
+    msgsnd(msgid2, &message2, sizeof(message2), 0);
+    controlKey = ftok("ControlKey", 65);
+    msgid = msgget(controlKey, 0666 | IPC_CREAT);
+    puts("RECEIVING");
+    msgrcv(msgid, &message, sizeof(message), 2, 0);
+    printf("Data Received is : %d \n", message.mesg_body.login);
+    logged = message.mesg_body.login;
+    if (logged)
+    {
+        cId = message.mesg_body.id;
+        catalogSmphrKey = message.mesg_body.catalogKey;
+        cartsSmphrKey = message.mesg_body.cartsKey;
+    }
+    msgctl(msgid, IPC_RMID, NULL);
 }
 
 void showCatalog()
 {
     unsigned short i;
+    down(catalogSmphr);
     key_t catalogKey = ftok("CatalogKey", 'b');
     int shmid = shmget(catalogKey, sizeof(productArray), IPC_CREAT | 0600);
     productArray *catalog = (productArray *)shmat(shmid, 0, 0);
@@ -48,6 +62,7 @@ void showCatalog()
             printf("Número: %d\tNombre del producto: %s\n",
                     catalog->array[i].id, catalog->array[i].name);
     shmdt(catalog);
+    up(catalogSmphr);
 }
 
 void updateCarts()

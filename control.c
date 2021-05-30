@@ -7,6 +7,7 @@
 #include <fcntl.h>
 #include <sys/ipc.h>
 #include <sys/sem.h>
+#include <sys/msg.h>
 #include <sys/shm.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -15,9 +16,9 @@
 key_t cartsSmphrKey, catalogSmphrKey;
 semaphore cartsSmphr, catalogSmphr;
 char *mails[MAILLENGTH] = {"cfuentesh@gmail.com", "pfloresg@hotmail.com", "pmercedezs@outlook.com",
-                            "jsuarezp@gmail.com", "aricardod@live.com", "jmartinezs@yahoo.com"},
+                           "jsuarezp@gmail.com", "aricardod@live.com", "jmartinezs@yahoo.com"},
      *pswds[PSWDLENGTH] = {"LobitoVeloz777", "31234327jjfj23", "contraseña", "12345678", "Alfredofeo",
-                            "JefFErzon666"};
+                           "JefFErzon666"};
 
 void initClients(client *clients)
 {
@@ -100,6 +101,7 @@ void initCatalog(productArray *catalog)
 
 void loadClients()
 {
+    puts("LOADING CLIENTS");
     FILE *file;
     const char *fileName = "Clients";
     client clients[6];
@@ -121,11 +123,13 @@ void loadClients()
     for (i = 0; i < 6; i++)
         shmClients[i] = clients[i];
     shmdt(shmClients);
+    puts("LOADED CLIENTS");
     pthread_exit(NULL);
 }
 
 void *loadCatalog()
 {
+    puts("LOADING CATALOG");
     FILE *file;
     const char *fileName = "Catalog";
     productArray *catalog;
@@ -135,15 +139,14 @@ void *loadCatalog()
     unsigned short i, len;
     fscanf(file, "%hd", &len);
     createProductArray(catalog, len);
-    while (!feof(file))
-    {
-        for (i = 0; i < catalog->length; i++)
-        {
-            fscanf(file, "%hd", &catalog->array[i].id);
-            fscanf(file, "%hd", &catalog->array[i].stock);
-            fscanf(file, "%s", catalog->array[i].name);
-        }
-    }
+    if (len > 0)
+        while (!feof(file))
+            for (i = 0; i < catalog->length; i++)
+            {
+                fscanf(file, "%hd", &catalog->array[i].id);
+                fscanf(file, "%hd", &catalog->array[i].stock);
+                fscanf(file, "%s", catalog->array[i].name);
+            }
     fclose(file);
     if (i <= 1)
         initCatalog(catalog);
@@ -153,11 +156,13 @@ void *loadCatalog()
     for (i = 0; i < shmCatalog->length; i++)
         shmCatalog->array[i] = catalog->array[i];
     shmdt(shmCatalog);
+    puts("CATALOG LOADED");
     pthread_exit(NULL);
 }
 
 void loadCarts()
 {
+    puts("LOADING CARTS");
     FILE *file;
     const char *fileName = "Carts";
     cart *carts = (cart *)malloc(sizeof(cart));
@@ -185,35 +190,41 @@ void loadCarts()
     for (j = 0; j < i; j++)
         shmCarts[j] = carts[j];
     shmdt(shmCarts);
+    puts("LOADED CARTS");
     pthread_exit(NULL);
 }
 
 void clientLogin()
 {
+    mesg_buffer message;
+    mesg_buffer2 message2;
+    key_t controlKey = ftok("ControlKey", 65), controlKey2 = ftok("ControlKey", 'p');
+    int msgid, msgid2;
     unsigned char i;
-    key_t controlKey = ftok("ControlKey", 'o');
-    int shmid = shmget(controlKey, sizeof(loginDTS), IPC_CREAT | 0600);
-    loginDTS *loginBuffer = (loginDTS *)shmat(shmid, 0, 0);
-    loginBuffer->credentials.id = loginBuffer->login = loginBuffer->cartsKey = loginBuffer->catalogKey = 0;
-    strcpy(loginBuffer->credentials.mail, "");
-    strcpy(loginBuffer->credentials.pswd, "");
     while (1)
     {
+        msgid2 = msgget(controlKey2, 0666 | IPC_CREAT);
+        puts("RECEIVING");
+        msgrcv(msgid2, &message2, sizeof(message2), 1, 0);
+        printf("Data Received is : %s,%s \n", message2.mesg_body.credentials.mail, message2.mesg_body.credentials.pswd);
         for (i = 0; i < 6; i++)
         {
-            loginBuffer->login = !strcmp(loginBuffer->credentials.mail, mails[i])
-                                    && !strcmp(loginBuffer->credentials.pswd, pswds[i]);
-            if (loginBuffer->login)
+            if (!strcmp(message2.mesg_body.credentials.mail, mails[i]) && !strcmp(message2.mesg_body.credentials.pswd, pswds[i]))
             {
-                loginBuffer->credentials.id = i;
-                loginBuffer->cartsKey = cartsSmphrKey;
-                loginBuffer->catalogKey = catalogSmphrKey;
-                strcpy(loginBuffer->credentials.mail, "");
-                strcpy(loginBuffer->credentials.pswd, "");
+                message.mesg_body.login = true;
+                message.mesg_body.id = i;
+                message.mesg_body.cartsKey = cartsSmphrKey;
+                message.mesg_body.catalogKey = catalogSmphrKey;
                 break;
             }
+            else
+                message.mesg_body.login = message.mesg_body.id = 0;
         }
-        sleep(1);
+        msgid = msgget(controlKey, 0666 | IPC_CREAT);
+        message.mesg_type = 2;
+        msgsnd(msgid, &message, sizeof(message), 0);
+        printf("Data send is : %d \n", message.mesg_body.login);
+        msgctl(msgid2, IPC_RMID, NULL);
     }
 }
 

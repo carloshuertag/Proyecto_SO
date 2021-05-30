@@ -2,30 +2,7 @@
 #define MAILLENGTH 32
 #define PSWDLENGTH 32
 
-// ----Semaphores----
-typedef int semaphore;
-
-int semaphore_init(key_t key, int value) {
-    int semid = semget(key, 1, IPC_CREAT | 0644);
-    if(semid == -1){
-        fprintf(stderr, "Error al crear semáforo");
-        exit(1);
-    }
-    semctl(semid, 0, SETVAL, value);
-    return semid;
-}
-
-void down(int semid) {
-    struct sembuf op_p[] = {0, -1, 0};
-    semop(semid, op_p, 1);
-}
-
-void up(int semid) {
-    struct sembuf op_v[] = {0, +1, 0};
-    semop(semid,op_v, 1);
-}
-
-// -----Useful structs-----
+// ----Store core----
 typedef struct client
 {
     unsigned short id;
@@ -40,6 +17,7 @@ typedef struct product
     char name[NAMELENGTH];
 } product;
 
+// -----Arrays structs------
 typedef struct productArray
 {
     unsigned short length;
@@ -83,14 +61,54 @@ productArray *createCatalog()
     return catalog;
 }
 
-// --------login IPC----------
-typedef struct loginDTS
+// ----Semaphores----
+typedef int semaphore;
+
+int semaphore_init(key_t key, int value) {
+    int semid = semget(key, 1, IPC_CREAT | 0644);
+    if(semid == -1){
+        fprintf(stderr, "Error al crear semáforo");
+        exit(1);
+    }
+    semctl(semid, 0, SETVAL, value);
+    return semid;
+}
+
+void down(int semid) {
+    struct sembuf op_p[] = {0, -1, 0};
+    semop(semid, op_p, 1);
+}
+
+void up(int semid) {
+    struct sembuf op_v[] = {0, +1, 0};
+    semop(semid,op_v, 1);
+}
+
+// -----DTS structs-----
+typedef struct controlDTS
 {
-    client credentials;
     bool login;
+    unsigned short id;
     key_t cartsKey;
     key_t catalogKey;
-} loginDTS;
+} controlDTS;
+
+typedef struct clientDTS
+{
+    client credentials;
+} clientDTS;
+
+typedef struct mesg_buffer
+{
+    long mesg_type;
+    controlDTS mesg_body;
+} mesg_buffer;
+
+typedef struct mesg_buffer2
+{
+    long mesg_type;
+    clientDTS mesg_body;
+} mesg_buffer2;
 
 /*
 // -----------------------inicia productsList------------------------------
