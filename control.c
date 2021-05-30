@@ -134,8 +134,7 @@ void *loadCatalog()
     const char *fileName = "Catalog";
     productArray *catalog;
     catalog = createCatalog();
-    if ((file = fopen(fileName, "r")) == NULL)
-        fprintf(stderr, "Error al leer el archivo");
+    if ((file = fopen(fileName, "r")) == NULL) fprintf(stderr, "Error al leer el archivo");
     unsigned short i, len;
     fscanf(file, "%hd", &len);
     createProductArray(catalog, len);
@@ -150,9 +149,12 @@ void *loadCatalog()
     fclose(file);
     if (i <= 1)
         initCatalog(catalog);
+    puts("INIT CATALOG FROM FILE");
     key_t catalogKey = ftok("CatalogKey", 'b');
     int shmid = shmget(catalogKey, sizeof(productArray), IPC_CREAT | 0600);
+    puts("SHARED MEMORY ID");
     productArray *shmCatalog = (productArray *)shmat(shmid, 0, 0);
+    puts("SHARED MEMORY");
     for (i = 0; i < shmCatalog->length; i++)
         shmCatalog->array[i] = catalog->array[i];
     shmdt(shmCatalog);

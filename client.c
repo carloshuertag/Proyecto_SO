@@ -46,15 +46,19 @@ void login(const char *mail, const char *pswd)
 
 void showCatalog()
 {
+    puts("SHOWING CATALOG");
     unsigned short i;
     down(catalogSmphr);
+    puts("DOWN SEMAPHORE");
     key_t catalogKey = ftok("CatalogKey", 'b');
     int shmid = shmget(catalogKey, sizeof(productArray), IPC_CREAT | 0600);
+    puts("SHARED MEMORY ID");
     productArray *catalog = (productArray *)shmat(shmid, 0, 0);
+    puts("SHARED MEMORY");
     if (catalog->length == 0)
     {
         printf("\nCatálogo de productos vacío, vuelva pronto\n");
-        up(catalogSmphr)
+        up(catalogSmphr);
         exit(0);
     }
     printf("\nCatálogo de productos:\n");

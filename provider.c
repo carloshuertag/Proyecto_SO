@@ -30,9 +30,24 @@ void getCatalog() {
 }
 
 void updateCatalog() {
-    if(isEmptyCatalog) isEmptyCatalog = false;
     down(catalogSmphr);
     *catalog = aux;
+    FILE *file;
+    const char *fileName = "Catalog";
+    if ((file = fopen(fileName, "w")) == NULL) fprintf(stderr, "Error al crear el archivo");
+    unsigned short i;
+    fprintf(file, "%hd", catalog->length);
+    fputs("\n", file);
+    for (i = 0; i < catalog->length; i++){
+        fprintf(file, "%hd", catalog->array[i].id);
+        fputs("\n", file);
+        fprintf(file, "%hd", catalog->array[i].stock);
+        fputs("\n", file);
+        fprintf(file, "%s", catalog->array[i].name);
+        if (i != catalog->length - 1)
+            fputs("\n", file);
+    }
+    fclose(file);
     up(catalogSmphr);
 }
 
@@ -42,6 +57,7 @@ void addProduct(unsigned short sku, const char *name, unsigned short stock) {
     strcpy(p.name, name);
     p.stock = stock;
     pushProduct(&aux, p);
+    if(isEmptyCatalog) isEmptyCatalog = false;
     updateCatalog();
 }
 
@@ -72,6 +88,7 @@ void addStock(unsigned short sku, unsigned short stock){
             found = true;
             return;
         }
+    updateCatalog();
     up(catalogSmphr);
     if(!found) printf("\nEl producto no se encuentra en el catálogo\n");
 }
@@ -123,5 +140,6 @@ int main() {
         fflush(stdin);
         scanf("%c", &cont);
     } while(cont == 's' || cont == 'S');
+    shmdt(catalog);
     return 0;
 }
