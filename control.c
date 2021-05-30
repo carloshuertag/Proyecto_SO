@@ -16,9 +16,9 @@
 key_t cartsSmphrKey, catalogSmphrKey;
 semaphore cartsSmphr, catalogSmphr;
 char *mails[MAILLENGTH] = {"cfuentesh@gmail.com", "pfloresg@hotmail.com", "pmercedezs@outlook.com",
-                           "jsuarezp@gmail.com", "aricardod@live.com", "jmartinezs@yahoo.com"},
+                            "jsuarezp@gmail.com", "aricardod@live.com", "jmartinezs@yahoo.com"},
      *pswds[PSWDLENGTH] = {"LobitoVeloz777", "31234327jjfj23", "contraseña", "12345678", "Alfredofeo",
-                           "JefFErzon666"};
+                            "JefFErzon666"};
 
 void initClients(client *clients)
 {
@@ -232,9 +232,9 @@ int main()
 {
     pthread_t clientsThread, catalogThread, cartsThread, controlThread;
     cartsSmphrKey = ftok("CartsSmphr", 'm');
-    cartsSmphr = semaphore_init(catalogSmphrKey, 1);
+    cartsSmphr = semaphore_init(&catalogSmphrKey, 1);
     catalogSmphrKey = ftok("CatalogSmphr", 'n');
-    catalogSmphr = semaphore_init(catalogSmphrKey, 1);
+    catalogSmphr = semaphore_init(&catalogSmphrKey, 1);
     pthread_create(&clientsThread, NULL, (void *)loadClients, NULL);
     pthread_join(clientsThread, NULL);
     pthread_create(&catalogThread, NULL, (void *)loadCatalog, NULL);

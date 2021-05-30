@@ -19,6 +19,7 @@ productArray *catalog, aux;
 void getCatalog() {
     unsigned short i;
     down(catalogSmphr);
+    puts("PROVIDER");
     key_t catalogKey = ftok("CatalogKey", 'b');
     int shmid = shmget(catalogKey, sizeof(productArray), IPC_CREAT | 0600);
     catalog = (productArray*)shmat(shmid, 0, 0);

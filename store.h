@@ -64,8 +64,8 @@ productArray *createCatalog()
 // ----Semaphores----
 typedef int semaphore;
 
-int semaphore_init(key_t key, int value) {
-    int semid = semget(key, 1, IPC_CREAT | 0644);
+int semaphore_init(key_t *key, int value) {
+    int semid = semget(*key, 1, IPC_CREAT | 0644);
     if(semid == -1){
         fprintf(stderr, "Error al crear semáforo");
         exit(1);

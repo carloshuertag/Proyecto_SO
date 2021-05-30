@@ -54,6 +54,7 @@ void showCatalog()
     if (catalog->length == 0)
     {
         printf("\nCatálogo de productos vacío, vuelva pronto\n");
+        up(catalogSmphr)
         exit(0);
     }
     printf("\nCatálogo de productos:\n");
@@ -77,6 +78,7 @@ void addToCart(unsigned short pId, unsigned short quantity)
 
 void getCart()
 {
+    down(cartsSmphr);
     unsigned short i;
     key_t cartsKey = ftok("CartsKey", 'a');
     int shmid = shmget(cartsKey, sizeof(cart *), IPC_CREAT | 0600);
@@ -93,6 +95,7 @@ void getCart()
         printf("Nombre del producto: %s\nCantidad: %d\n",
                 clientCart.products.array[i].name, clientCart.products.array[i].stock);
     }
+    up(cartsSmphr);
 }
 
 int main()
