@@ -30,7 +30,7 @@ product* initProductArray(unsigned short len)
     return (len == 0 || len == 1) ? (product *)malloc(sizeof(product)) : (product *)calloc(len, sizeof(product));
 }
 
-void pushProduct(product *pArray, int *len, product element)
+void pushProduct(product *pArray, unsigned short *len, product element)
 {
     if ((pArray = (product *)realloc(pArray, ++(*len) * sizeof(product)))) pArray[(*len) - 1] = element;
     else {
@@ -70,7 +70,7 @@ typedef struct controlDTS
     unsigned short id;
     key_t cartsKey;
     key_t catalogKey;
-    int catalogLength;
+    unsigned short catalogLength;
 } controlDTS;
 
 typedef struct clientDTS

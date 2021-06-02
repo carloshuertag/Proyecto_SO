@@ -15,7 +15,7 @@
 
 key_t cartsSmphrKey, catalogSmphrKey;
 semaphore cartsSmphr, catalogSmphr;
-int catalogLength = 0;
+unsigned short catalogLength = 0;
 char *mails[MAILLENGTH] = {"cfuentesh@gmail.com", "pfloresg@hotmail.com", "pmercedezs@outlook.com",
                             "jsuarezp@gmail.com", "aricardod@live.com", "jmartinezs@yahoo.com"},
      *pswds[PSWDLENGTH] = {"LobitoVeloz777", "31234327jjfj23", "contraseña", "12345678", "Alfredofeo",
@@ -136,7 +136,7 @@ void loadCatalog()
     product *catalog, *shmCatalog;
     if ((file = fopen(fileName, "r")) == NULL) fprintf(stderr, "Error al leer el archivo");
     unsigned short i;
-    fscanf(file, "%d", &catalogLength);
+    fscanf(file, "%hd", &catalogLength);
     catalog = initProductArray(catalogLength);
     if (catalogLength > 0)
         while (!feof(file))
@@ -153,11 +153,9 @@ void loadCatalog()
     shmCatalog = (product *)shmat(shmid1, NULL, 0);
     product *aux;
     for (i = 0; i < catalogLength; i++) {
-        printf("%hd: %hd %hd %s\n",i , catalog[i].id, catalog[i].stock, catalog[i].name);
         shmCatalog[i].id = catalog[i].id;
         shmCatalog[i].stock = catalog[i].stock;
         strcpy(shmCatalog[i].name, catalog[i].name);
-        printf("%hd: %hd %hd %s\n",i , shmCatalog[i].id, shmCatalog[i].stock, shmCatalog[i].name);
     }
     shmdt(shmCatalog);
     key_t providerKey = ftok("ProviderKey", 'p');
@@ -174,9 +172,9 @@ void loadCarts()
     puts("LOADING CARTS");
     FILE *file;
     const char *fileName = "Carts";
-    cart *carts = (cart *)malloc(sizeof(cart));
-    if ((file = fopen(fileName, "r")) == NULL)
-        fprintf(stderr, "Error al leer el archivo");
+    cart *carts;
+    if ((file = fopen(fileName, "r")) == NULL) fprintf(stderr, "Error al leer el archivo");
+    if(!(carts = (cart *)malloc(sizeof(cart) * 6))) fprintf(stderr, "Error en malloc");;
     unsigned short i, j, k, len = 0;
     for (i = 0; !feof(file); i++)
     {
@@ -195,7 +193,7 @@ void loadCarts()
     if (i <= 1)
         initCarts(carts);
     key_t cartsKey = ftok("CartsKey", 'a');
-    int shmid = shmget(cartsKey, (sizeof(cart) * ++i ) + ((len - 1) * sizeof(product)), IPC_CREAT | 0600);
+    int shmid = shmget(cartsKey, (sizeof(cart) * 6 ) + ((len - 1) * sizeof(product)), IPC_CREAT | 0600);
     cart *shmCarts = (cart *)shmat(shmid, 0, 0);
     for (j = 0; j < i; j++){
         shmCarts[j].clientId = carts[j].clientId;

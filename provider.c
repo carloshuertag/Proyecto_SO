@@ -11,7 +11,8 @@
 #include <sys/stat.h>
 #include "store.h"
 
-int *len, shmid;
+unsigned short *len;
+int shmid;
 key_t catalogSmphrKey, catalogKey;
 semaphore catalogSmphr;
 bool isEmptyCatalog;
@@ -22,7 +23,7 @@ void getCatalog() {
     down(catalogSmphr);
     key_t providerKey = ftok("ProviderKey", 'p');
     int shmid2 = shmget(providerKey, sizeof(int), IPC_CREAT | 0600);
-    len = (int*)shmat(shmid2, NULL, 0);
+    len = (unsigned short*)shmat(shmid2, NULL, 0);
     catalogKey = ftok("CatalogKey", 'a');
     shmid = shmget(catalogKey, (*len) * sizeof(product), IPC_CREAT | 0600);
     catalog = (product*)shmat(shmid, NULL, 0);
@@ -40,7 +41,6 @@ void updateCatalog() {
     down(catalogSmphr);
     int i;
     shmctl(shmid, IPC_RMID, NULL);
-    product *temp, *new;
     int shmid3 = shmget(catalogKey, (*len) * sizeof(product), IPC_CREAT | 0600);
     catalog = (product*)shmat(shmid3, NULL, 0);
     for(i = 0; i < *len; i++) {
@@ -48,11 +48,10 @@ void updateCatalog() {
         catalog[i].stock = aux[i].stock;
         strcpy(catalog[i].name, aux[i].name);
     }
-    //aqui se actualiza la memoria compartida (tal vez)
     FILE *file;
     const char *fileName = "Catalog";
     if ((file = fopen(fileName, "w")) == NULL) fprintf(stderr, "Error al crear el archivo");
-    fprintf(file, "%d", *len);
+    fprintf(file, "%hd", *len);
     fputs("\n", file);
     for (i = 0; i < *len; i++){
         fprintf(file, "%hd", catalog[i].id);

@@ -14,8 +14,9 @@
 
 key_t cartsSmphrKey, catalogSmphrKey;
 semaphore cartsSmphr, catalogSmphr;
-int cId, catalogLength;
-cart clientCart;
+int cId, catalogLength, shmid, cartsLen = 0;
+cart clientCart, *clientsCarts, *carts;
+product *catalog, *aux;
 bool logged = false;
 
 void login(const char *mail, const char *pswd)
@@ -49,7 +50,7 @@ void showCatalog()
     down(catalogSmphr);
     key_t catalogKey = ftok("CatalogKey", 'a');
     int shmid = shmget(catalogKey, sizeof(product) * catalogLength, IPC_CREAT | 0600);
-    product *catalog = (product *)shmat(shmid, NULL, 0);
+    catalog = (product *)shmat(shmid, NULL, 0);
     if (catalogLength == 0)
     {
         printf("\nCatálogo de productos vacío, vuelva pronto\n");
@@ -65,23 +66,94 @@ void showCatalog()
 
 void updateCarts()
 {
-
+    down(cartsSmphr);
+    unsigned short i;
+    int j;
+    shmctl(shmid, IPC_RMID, NULL);
+    key_t cartsKey = ftok("CartsKey", 'a');
+    int shmid3 = shmget(cartsKey, 6 * sizeof(cart) + cartsLen * sizeof(product), IPC_CREAT | 0600);
+    carts = (cart*)shmat(shmid3, NULL, 0);
+    for(i = 0; i < 6; i++) {
+        carts[i].clientId = clientsCarts[i].clientId;
+        carts[i].length = clientsCarts[i].length;
+        for(j = 0; j < carts[i].length; j++) {
+            carts[i].pArray[j].id = clientsCarts[i].pArray[j].id;
+            carts[i].pArray[j].stock = clientsCarts[i].pArray[j].stock;
+            strcpy(carts[i].pArray[j].name, clientsCarts[i].pArray[j].name);
+        }
+    }
+    FILE *file;
+    const char *fileName = "Carts";
+    if ((file = fopen(fileName, "w")) == NULL) fprintf(stderr, "Error al crear el archivo");
+    for (i = 0; i < 6; i++){
+        fprintf(file, "%hd", carts[i].clientId);
+        fputs("\n", file);
+        fprintf(file, "%hd", carts[i].length);
+        fputs("\n", file);
+        for(j = 0; j < carts[i].length; j++) {
+            fprintf(file, "%hd", carts[i].pArray[j].id);
+            fputs("\n", file);
+            fprintf(file, "%hd", carts[i].pArray[j].stock);
+            fputs("\n", file);
+            fprintf(file, "%s", carts[i].pArray[j].name);
+            if (i != 5) fputs("\n", file);
+        }
+    }
+    fclose(file);
+    up(cartsSmphr);
 }
 
 void addToCart(unsigned short pId, unsigned short quantity)
 {
-
-    updateCarts();
+    unsigned short i;
+    bool found = false;
+    down(catalogSmphr);
+    for(i = 0; i < catalogLength; i++)
+        if(catalog[i].id == pId && catalog[i].stock != 0){
+            --catalog[i].stock;
+            ++clientCart.length;
+            product prod;
+            prod.id = catalog[i].id;
+            prod.stock = quantity;
+            strcpy(prod.name, catalog[i].name);
+            pushProduct(clientCart.pArray, &clientCart.length, prod);
+            updateCarts();
+            printf("\nEl producto ha sido agregado a su carrito:\nNúmero: %d\tNombre del producto: %s\nCantidad: %d\n",
+                    clientCart.pArray[clientCart.length - 1].id, clientCart.pArray[clientCart.length - 1].name,
+                    clientCart.pArray[clientCart.length - 1].stock);
+            found = true;
+            up(catalogSmphr);
+            return;
+        }
+    if(!found){
+        printf("\nEl producto no se encuentra en el catálogo\n");
+        up(catalogSmphr);
+    }
 }
 
 void getCart()
 {
     down(cartsSmphr);
-    unsigned short i;
+    unsigned short i, j;
     key_t cartsKey = ftok("CartsKey", 'a');
-    int shmid = shmget(cartsKey, sizeof(cart) * 6, IPC_CREAT | 0600);
-    cart *carts = (cart *)shmat(shmid, 0, 0);
-    clientCart = carts[cId];
+    shmid = shmget(cartsKey, sizeof(cart) * 6 + catalogLength * sizeof(product), IPC_CREAT | 0600);
+    carts = (cart *)shmat(shmid, 0, 0);
+    if(!(clientsCarts = (cart*)malloc(sizeof(cart) * 6))) perror("Error en malloc");
+    for(i = 0; i < 6; i++) {
+        printf("%hd\n", carts[i].clientId);
+        clientsCarts[i].clientId = carts[i].clientId;
+        clientsCarts[i].length = carts[i].length;
+        cartsLen += carts[i].length;
+        puts("CCCC");
+        clientsCarts[i].pArray = initProductArray(clientsCarts[i].length);
+        puts("DDDD");
+        for(j = 0; j < clientsCarts[i].length; j++) {
+            clientsCarts[i].pArray[j].id = carts[i].pArray[j].id;
+            clientsCarts[i].pArray[j].stock = carts[i].pArray[j].stock;
+            strcpy(clientsCarts[i].pArray[j].name, carts[i].pArray[j].name);
+        }
+    }
+    clientCart = clientsCarts[cId];
     printf("\nSu carrito de compras:\n");
     if (clientCart.length)
     {
