@@ -147,7 +147,7 @@ void loadCatalog()
                 fscanf(file, "%s", catalog[i].name);
             }
     fclose(file);
-    if (catalogLength == 0) initCatalog(catalog, 0);
+    if (!catalogLength) initCatalog(catalog, 0);
     key_t catalogKey = ftok("CatalogKey", 'a');
     int shmid1 = shmget(catalogKey, catalogLength * sizeof(product), IPC_CREAT | 0600);
     shmCatalog = (product *)shmat(shmid1, NULL, 0);
@@ -172,7 +172,9 @@ void loadCarts()
     puts("LOADING CARTS");
     FILE *file;
     const char *fileName = "Carts";
-    cart *carts;
+    product* pArray;
+    cart* carts;
+    unsigned short *cLengths, *cIds;
     if ((file = fopen(fileName, "r")) == NULL) fprintf(stderr, "Error al leer el archivo");
     if(!(carts = (cart *)malloc(sizeof(cart) * 6))) fprintf(stderr, "Error en malloc");;
     unsigned short i, j, k, len = 0;
@@ -193,18 +195,27 @@ void loadCarts()
     if (i <= 1)
         initCarts(carts);
     key_t cartsKey = ftok("CartsKey", 'a');
-    int shmid = shmget(cartsKey, (sizeof(cart) * 6 ) + ((len - 1) * sizeof(product)), IPC_CREAT | 0600);
-    cart *shmCarts = (cart *)shmat(shmid, 0, 0);
-    for (j = 0; j < i; j++){
-        shmCarts[j].clientId = carts[j].clientId;
-        shmCarts[j].length = carts[j].length;
-        for (k = 0; k < carts[i].length; k++) {
-            shmCarts[j].pArray[k].id = carts[j].pArray[k].id;
-            shmCarts[j].pArray[k].stock = carts[j].pArray[k].stock;
-            strcpy(shmCarts[j].pArray[k].name, carts[j].pArray[k].name);
+    int shmid1 = shmget(cartsKey, sizeof(unsigned short) * 6, IPC_CREAT | 0600), shmid2, shmid3;
+    cLengths = (unsigned short*)shmat(shmid1, NULL, 0);
+    cartsKey = ftok("CartsKey", 'b');
+    shmid2 = shmget(cartsKey, sizeof(unsigned short) * 6, IPC_CREAT | 0600);
+    cIds = (unsigned short*)shmat(shmid2, NULL, 0);
+    cartsKey = ftok("CartsKey", 'c');
+    shmid3 = shmget(cartsKey, sizeof(product) * len, IPC_CREAT | 0600);
+    pArray = (product*)shmat(shmid3, NULL, 0);
+    i = 0;
+    for (j = 0; j < 6; j++){
+        cIds[j] = carts[j].clientId;
+        cLengths[j] = carts[j].length;
+        for (k = 0; k < cLengths[j]; k++, i++) {
+            pArray[i].id = carts[j].pArray[k].id;
+            pArray[i].stock = carts[j].pArray[k].stock;
+            strcpy(pArray[i].name, carts[j].pArray[k].name);
         }
     }
-    shmdt(shmCarts);
+    shmdt(cIds);
+    shmdt(cLengths);
+    shmdt(pArray);
     puts("LOADED CARTS");
     pthread_exit(NULL);
 }
