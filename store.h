@@ -32,8 +32,7 @@ product* initProductArray(unsigned short len)
 
 void pushProduct(product *pArray, int *len, product element)
 {
-    if ((pArray = (product *)realloc(pArray, ++(*len) * sizeof(product))))
-        pArray[*len - 1] = element;
+    if ((pArray = (product *)realloc(pArray, ++(*len) * sizeof(product)))) pArray[(*len) - 1] = element;
     else {
         free(pArray);
         fprintf(stderr, "Error (re)allocating memory");

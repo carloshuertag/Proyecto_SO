@@ -11,8 +11,8 @@
 #include <sys/stat.h>
 #include "store.h"
 
-int *len;
-key_t catalogSmphrKey;
+int *len, shmid;
+key_t catalogSmphrKey, catalogKey;
 semaphore catalogSmphr;
 bool isEmptyCatalog;
 product *catalog, *aux;
@@ -22,10 +22,10 @@ void getCatalog() {
     down(catalogSmphr);
     key_t providerKey = ftok("ProviderKey", 'p');
     int shmid2 = shmget(providerKey, sizeof(int), IPC_CREAT | 0600);
-    len = (int*)shmat(shmid2, NULL, SHM_RDONLY);
+    len = (int*)shmat(shmid2, NULL, 0);
     printf("CATALOG LENGTH: %d\n", *len);
-    key_t catalogKey = ftok("CatalogKey", 'a');
-    int shmid = shmget(catalogKey, (*len) * sizeof(product), IPC_CREAT | 0600);
+    catalogKey = ftok("CatalogKey", 'a');
+    shmid = shmget(catalogKey, (*len) * sizeof(product), IPC_CREAT | 0600);
     catalog = (product*)shmat(shmid, NULL, 0);
     aux = initProductArray(*len);
     for(i = 0; i < *len; i++) {
@@ -38,11 +38,21 @@ void getCatalog() {
 }
 
 void updateCatalog() {
+    down(catalogSmphr);
+    int i;
+    shmctl(shmid, IPC_RMID, NULL);
+    product *temp, *new;
+    int shmid3 = shmget(catalogKey, (*len) * sizeof(product), IPC_CREAT | 0600);
+    catalog = (product*)shmat(shmid3, NULL, 0);
+    for(i = 0; i < *len; i++) {
+        catalog[i].id = aux[i].id;
+        catalog[i].stock = aux[i].stock;
+        strcpy(catalog[i].name, aux[i].name);
+    }
     //aqui se actualiza la memoria compartida (tal vez)
     FILE *file;
     const char *fileName = "Catalog";
     if ((file = fopen(fileName, "w")) == NULL) fprintf(stderr, "Error al crear el archivo");
-    unsigned short i;
     fprintf(file, "%d", *len);
     fputs("\n", file);
     for (i = 0; i < *len; i++){
@@ -55,6 +65,7 @@ void updateCatalog() {
             fputs("\n", file);
     }
     fclose(file);
+    up(catalogSmphr);
 }
 
 void addProduct(unsigned short sku, const char *name, unsigned short stock) {
@@ -76,10 +87,13 @@ void getProduct(unsigned short sku) {
             printf("\nProducto encontrado:\nNúmero: %d\tNombre del producto: %s\tExistencia: %d\n",
                     catalog[i].id, catalog[i].name, catalog[i].stock);
             found = true;
+            up(catalogSmphr);
             return;
         }
-    up(catalogSmphr);
-    if(!found) printf("\nEl producto no se encuentra en el catálogo\n");
+    if(!found){
+        printf("\nEl producto no se encuentra en el catálogo\n");
+        up(catalogSmphr);
+    }
 }
 
 void addStock(unsigned short sku, unsigned short stock){
@@ -92,11 +106,14 @@ void addStock(unsigned short sku, unsigned short stock){
             printf("\nSe han agregado las existencias:\nNúmero: %d\tNombre del producto: %s\tExistencia: %d\n",
                     catalog[i].id, catalog[i].name, catalog[i].stock);
             found = true;
+            up(catalogSmphr);
+            updateCatalog();
             return;
         }
-    updateCatalog();
-    up(catalogSmphr);
-    if(!found) printf("\nEl producto no se encuentra en el catálogo\n");
+    if(!found) {
+        printf("\nEl producto no se encuentra en el catálogo\n");
+        up(catalogSmphr);
+    }
 }
 
 int main() {
@@ -133,7 +150,7 @@ int main() {
                 else {
                     printf("\nIngresa el sku del producto: ");
                     scanf("%hd", &sku);
-                    printf("\nIngresa la cantidad de existencia del producto: ");
+                    printf("\nIngresa la nueva cantidad de existencia del producto: ");
                     scanf("%hd", &stock);
                     addStock(sku, stock);
                 }

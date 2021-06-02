@@ -163,6 +163,8 @@ void loadCatalog()
     key_t providerKey = ftok("ProviderKey", 'p');
     int shmid2 = shmget(providerKey, sizeof(int), IPC_CREAT | 0600), *len;
     len = (int*)shmat(shmid2, NULL, 0);
+    *len = catalogLength;
+    shmdt(len);
     puts("CATALOG LOADED");
     pthread_exit(NULL);
 }
