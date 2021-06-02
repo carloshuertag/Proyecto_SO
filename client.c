@@ -59,12 +59,13 @@ void showCatalog()
     printf("\nCatálogo de productos:\n");
     for (i = 0; i < catalogLength; i++)
         if (catalog[i].stock > 0) printf("Número: %d\tNombre del producto: %s\n",
-                    catalog[i].id, catalog[i].name);
+                                            catalog[i].id, catalog[i].name);
     up(catalogSmphr);
 }
 
 void updateCarts()
 {
+
 }
 
 void addToCart(unsigned short pId, unsigned short quantity)
@@ -78,13 +79,14 @@ void getCart()
     down(cartsSmphr);
     unsigned short i;
     key_t cartsKey = ftok("CartsKey", 'a');
-    int shmid = shmget(cartsKey, sizeof(cart *), IPC_CREAT | 0600);
+    int shmid = shmget(cartsKey, sizeof(cart) * 6, IPC_CREAT | 0600);
     cart *carts = (cart *)shmat(shmid, 0, 0);
     clientCart = carts[cId];
     printf("\nSu carrito de compras:\n");
     if (clientCart.length)
     {
         printf("Su carrito de compras está vacío\n");
+        up(cartsSmphr);
         return;
     }
     for (i = 0; i < clientCart.length; i++)
@@ -119,6 +121,7 @@ int main()
         login(mail, pswd);
     }
     cartsSmphr = semget(cartsSmphrKey, 1, IPC_CREAT | 0644);
+    up(cartsSmphr);
     catalogSmphr = semget(catalogSmphrKey, 1, IPC_CREAT | 0644);
     showCatalog();
     getCart();

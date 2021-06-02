@@ -23,7 +23,6 @@ void getCatalog() {
     key_t providerKey = ftok("ProviderKey", 'p');
     int shmid2 = shmget(providerKey, sizeof(int), IPC_CREAT | 0600);
     len = (int*)shmat(shmid2, NULL, 0);
-    printf("CATALOG LENGTH: %d\n", *len);
     catalogKey = ftok("CatalogKey", 'a');
     shmid = shmget(catalogKey, (*len) * sizeof(product), IPC_CREAT | 0600);
     catalog = (product*)shmat(shmid, NULL, 0);

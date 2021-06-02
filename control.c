@@ -250,7 +250,7 @@ int main()
 {
     pthread_t clientsThread, catalogThread, cartsThread, controlThread;
     cartsSmphrKey = ftok("CartsSmphr", 'm');
-    cartsSmphr = semaphore_init(&catalogSmphrKey, 1);
+    cartsSmphr = semaphore_init(&cartsSmphrKey, 1);
     catalogSmphrKey = ftok("CatalogSmphr", 'n');
     catalogSmphr = semaphore_init(&catalogSmphrKey, 1);
     pthread_create(&clientsThread, NULL, (void *)loadClients, NULL);
