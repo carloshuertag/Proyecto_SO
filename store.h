@@ -18,47 +18,27 @@ typedef struct product
 } product;
 
 // -----Arrays structs------
-typedef struct productArray
-{
-    unsigned short length;
-    product *array;
-} productArray;
-
 typedef struct cart
 {
     unsigned short clientId;
-    productArray products;
+    unsigned short length;
+    product *pArray;
 } cart;
 
-void createProductArray(productArray *pArray, unsigned short length)
+product* initProductArray(unsigned short len)
 {
-    pArray->array = (length == 0) ? (product *)malloc(sizeof(product)) : (product *)calloc(length, sizeof(product));
-    pArray->length = length;
+    return (len == 0 || len == 1) ? (product *)malloc(sizeof(product)) : (product *)calloc(len, sizeof(product));
 }
 
-void pushProduct(productArray *pArray, product element)
+void pushProduct(product *pArray, int *len, product element)
 {
-    if ((pArray->array = (product *)realloc(pArray->array, ++pArray->length * sizeof(product))))
-    {
-        pArray->array[pArray->length - 1] = element;
-    }
-    else
-    {
+    if ((pArray = (product *)realloc(pArray, ++(*len) * sizeof(product))))
+        pArray[*len - 1] = element;
+    else {
         free(pArray);
         fprintf(stderr, "Error (re)allocating memory");
         exit(1);
     }
-}
-
-productArray *createCatalog()
-{
-    productArray *catalog = (productArray *)malloc(sizeof(productArray));
-    if (!catalog)
-        exit(1);
-    catalog->length = 0;
-    catalog->array = NULL;
-    createProductArray(catalog, 0);
-    return catalog;
 }
 
 // ----Semaphores----
@@ -91,6 +71,7 @@ typedef struct controlDTS
     unsigned short id;
     key_t cartsKey;
     key_t catalogKey;
+    int catalogLength;
 } controlDTS;
 
 typedef struct clientDTS

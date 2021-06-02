@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6"/>
+	<Project>
+		<Option title="Proyecto_SO"/>
+		<Option makefile_is_custom="1"/>
+		<Option compiler="gcc"/>
+		<Option virtualFolders="CMake Files\;"/>
+		<Build>
+			<Target title="all">
+				<Option working_dir="/Users/carloshuertagarcia/Documents/CProjects/Proyecto_SO/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j4 -f &quot;/Users/carloshuertagarcia/Documents/CProjects/Proyecto_SO/cmake-build-debug/Makefile&quot;  VERBOSE=1 all"/>
+					<CompileFile command="/usr/bin/make -j4 -f &quot;/Users/carloshuertagarcia/Documents/CProjects/Proyecto_SO/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j4 -f &quot;/Users/carloshuertagarcia/Documents/CProjects/Proyecto_SO/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j4 -f &quot;/Users/carloshuertagarcia/Documents/CProjects/Proyecto_SO/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="rebuild_cache">
+				<Option working_dir="/Users/carloshuertagarcia/Documents/CProjects/Proyecto_SO/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j4 -f &quot;/Users/carloshuertagarcia/Documents/CProjects/Proyecto_SO/cmake-build-debug/Makefile&quot;  VERBOSE=1 rebuild_cache"/>
+					<CompileFile command="/usr/bin/make -j4 -f &quot;/Users/carloshuertagarcia/Documents/CProjects/Proyecto_SO/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j4 -f &quot;/Users/carloshuertagarcia/Documents/CProjects/Proyecto_SO/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j4 -f &quot;/Users/carloshuertagarcia/Documents/CProjects/Proyecto_SO/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="edit_cache">
+				<Option working_dir="/Users/carloshuertagarcia/Documents/CProjects/Proyecto_SO/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j4 -f &quot;/Users/carloshuertagarcia/Documents/CProjects/Proyecto_SO/cmake-build-debug/Makefile&quot;  VERBOSE=1 edit_cache"/>
+					<CompileFile command="/usr/bin/make -j4 -f &quot;/Users/carloshuertagarcia/Documents/CProjects/Proyecto_SO/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j4 -f &quot;/Users/carloshuertagarcia/Documents/CProjects/Proyecto_SO/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j4 -f &quot;/Users/carloshuertagarcia/Documents/CProjects/Proyecto_SO/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="Proyecto_SO">
+				<Option output="/Users/carloshuertagarcia/Documents/CProjects/Proyecto_SO/cmake-build-debug/Proyecto_SO" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/Users/carloshuertagarcia/Documents/CProjects/Proyecto_SO/cmake-build-debug"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/Users/carloshuertagarcia/Documents/CProjects/Proyecto_SO/."/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/Library/Developer/CommandLineTools/usr/lib/clang/12.0.5/include"/>
+					<Add directory="/Library/Developer/CommandLineTools/usr/include"/>
+					<Add directory="/System/Library/Frameworks"/>
+					<Add directory="/Library/Frameworks"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j4 -f &quot;/Users/carloshuertagarcia/Documents/CProjects/Proyecto_SO/cmake-build-debug/Makefile&quot;  VERBOSE=1 Proyecto_SO"/>
+					<CompileFile command="/usr/bin/make -j4 -f &quot;/Users/carloshuertagarcia/Documents/CProjects/Proyecto_SO/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j4 -f &quot;/Users/carloshuertagarcia/Documents/CProjects/Proyecto_SO/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j4 -f &quot;/Users/carloshuertagarcia/Documents/CProjects/Proyecto_SO/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="Proyecto_SO/fast">
+				<Option output="/Users/carloshuertagarcia/Documents/CProjects/Proyecto_SO/cmake-build-debug/Proyecto_SO" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/Users/carloshuertagarcia/Documents/CProjects/Proyecto_SO/cmake-build-debug"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/Users/carloshuertagarcia/Documents/CProjects/Proyecto_SO/."/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/Library/Developer/CommandLineTools/usr/lib/clang/12.0.5/include"/>
+					<Add directory="/Library/Developer/CommandLineTools/usr/include"/>
+					<Add directory="/System/Library/Frameworks"/>
+					<Add directory="/Library/Frameworks"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j4 -f &quot;/Users/carloshuertagarcia/Documents/CProjects/Proyecto_SO/cmake-build-debug/Makefile&quot;  VERBOSE=1 Proyecto_SO/fast"/>
+					<CompileFile command="/usr/bin/make -j4 -f &quot;/Users/carloshuertagarcia/Documents/CProjects/Proyecto_SO/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j4 -f &quot;/Users/carloshuertagarcia/Documents/CProjects/Proyecto_SO/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j4 -f &quot;/Users/carloshuertagarcia/Documents/CProjects/Proyecto_SO/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+		</Build>
+		<Unit filename="/Users/carloshuertagarcia/Documents/CProjects/Proyecto_SO/control.c">
+			<Option target="Proyecto_SO"/>
+		</Unit>
+		<Unit filename="/Users/carloshuertagarcia/Documents/CProjects/Proyecto_SO/store.h">
+			<Option target="Proyecto_SO"/>
+		</Unit>
+		<Unit filename="/Users/carloshuertagarcia/Documents/CProjects/Proyecto_SO/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\"/>
+		</Unit>
+	</Project>
+</CodeBlocks_project_file>

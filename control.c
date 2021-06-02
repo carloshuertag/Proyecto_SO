@@ -15,6 +15,7 @@
 
 key_t cartsSmphrKey, catalogSmphrKey;
 semaphore cartsSmphr, catalogSmphr;
+int catalogLength = 0;
 char *mails[MAILLENGTH] = {"cfuentesh@gmail.com", "pfloresg@hotmail.com", "pmercedezs@outlook.com",
                             "jsuarezp@gmail.com", "aricardod@live.com", "jmartinezs@yahoo.com"},
      *pswds[PSWDLENGTH] = {"LobitoVeloz777", "31234327jjfj23", "contraseña", "12345678", "Alfredofeo",
@@ -65,36 +66,36 @@ void initCarts(cart *carts)
     if ((file = fopen(fileName, "a")) == NULL)
         fprintf(stderr, "Error al crear el archivo");
     carts[0].clientId = 0;
-    carts[0].products = *createCatalog();
+    carts[0].pArray = initProductArray(0);
     carts[1].clientId = 1;
-    carts[1].products = *createCatalog();
+    carts[1].pArray = initProductArray(0);
     carts[2].clientId = 2;
-    carts[2].products = *createCatalog();
+    carts[2].pArray = initProductArray(0);
     carts[3].clientId = 3;
-    carts[3].products = *createCatalog();
+    carts[3].pArray = initProductArray(0);
     carts[4].clientId = 4;
-    carts[4].products = *createCatalog();
+    carts[4].pArray = initProductArray(0);
     carts[5].clientId = 5;
-    carts[5].products = *createCatalog();
+    carts[5].pArray = initProductArray(0);
     unsigned short i = 0;
     for (i = 0; i < 6; i++)
     {
         fprintf(file, "%hd", carts[i].clientId);
         fputs("\n", file);
-        fprintf(file, "%hd", carts[i].products.length);
+        fprintf(file, "%hd", (unsigned short)0);
         if (i != 5)
             fputs("\n", file);
     }
     fclose(file);
 }
 
-void initCatalog(productArray *catalog)
+void initCatalog(product *catalog, unsigned short len)
 {
     FILE *file;
     const char *fileName = "Catalog";
-    if ((file = fopen(fileName, "a")) == NULL)
+    if ((file = fopen(fileName, "w")) == NULL)
         fprintf(stderr, "Error al crear el archivo");
-    fprintf(file, "%hd", catalog->length);
+    fprintf(file, "%hd", len);
     fputs("\n", file);
     fclose(file);
 }
@@ -127,37 +128,41 @@ void loadClients()
     pthread_exit(NULL);
 }
 
-void *loadCatalog()
+void loadCatalog()
 {
     puts("LOADING CATALOG");
     FILE *file;
     const char *fileName = "Catalog";
-    productArray *catalog;
-    catalog = createCatalog();
+    product *catalog, *shmCatalog;
     if ((file = fopen(fileName, "r")) == NULL) fprintf(stderr, "Error al leer el archivo");
-    unsigned short i, len;
-    fscanf(file, "%hd", &len);
-    createProductArray(catalog, len);
-    if (len > 0)
+    unsigned short i;
+    fscanf(file, "%d", &catalogLength);
+    catalog = initProductArray(catalogLength);
+    if (catalogLength > 0)
         while (!feof(file))
-            for (i = 0; i < catalog->length; i++)
+            for (i = 0; i < catalogLength; i++)
             {
-                fscanf(file, "%hd", &catalog->array[i].id);
-                fscanf(file, "%hd", &catalog->array[i].stock);
-                fscanf(file, "%s", catalog->array[i].name);
+                fscanf(file, "%hd", &catalog[i].id);
+                fscanf(file, "%hd", &catalog[i].stock);
+                fscanf(file, "%s", catalog[i].name);
             }
     fclose(file);
-    if (i <= 1)
-        initCatalog(catalog);
-    puts("INIT CATALOG FROM FILE");
-    key_t catalogKey = ftok("CatalogKey", 'b');
-    int shmid = shmget(catalogKey, sizeof(productArray), IPC_CREAT | 0600);
-    puts("SHARED MEMORY ID");
-    productArray *shmCatalog = (productArray *)shmat(shmid, 0, 0);
-    puts("SHARED MEMORY");
-    for (i = 0; i < shmCatalog->length; i++)
-        shmCatalog->array[i] = catalog->array[i];
+    if (catalogLength == 0) initCatalog(catalog, 0);
+    key_t catalogKey = ftok("CatalogKey", 'a');
+    int shmid1 = shmget(catalogKey, catalogLength * sizeof(product), IPC_CREAT | 0600);
+    shmCatalog = (product *)shmat(shmid1, NULL, 0);
+    product *aux;
+    for (i = 0; i < catalogLength; i++) {
+        printf("%hd: %hd %hd %s\n",i , catalog[i].id, catalog[i].stock, catalog[i].name);
+        shmCatalog[i].id = catalog[i].id;
+        shmCatalog[i].stock = catalog[i].stock;
+        strcpy(shmCatalog[i].name, catalog[i].name);
+        printf("%hd: %hd %hd %s\n",i , shmCatalog[i].id, shmCatalog[i].stock, shmCatalog[i].name);
+    }
     shmdt(shmCatalog);
+    key_t providerKey = ftok("ProviderKey", 'p');
+    int shmid2 = shmget(providerKey, sizeof(int), IPC_CREAT | 0600), *len;
+    len = (int*)shmat(shmid2, NULL, 0);
     puts("CATALOG LOADED");
     pthread_exit(NULL);
 }
@@ -170,27 +175,35 @@ void loadCarts()
     cart *carts = (cart *)malloc(sizeof(cart));
     if ((file = fopen(fileName, "r")) == NULL)
         fprintf(stderr, "Error al leer el archivo");
-    unsigned short i, j, len;
+    unsigned short i, j, k, len = 0;
     for (i = 0; !feof(file); i++)
     {
         fscanf(file, "%hd", &carts[i].clientId);
-        fscanf(file, "%hd", &len);
-        createProductArray(&carts[i].products, len);
-        for (j = 0; j < carts[i].products.length; j++)
+        fscanf(file, "%hd", &carts[i].length);
+        carts[i].pArray = initProductArray(carts[i].length);
+        len += carts[i].length;
+        for (j = 0; j < carts[i].length; j++)
         {
-            fscanf(file, "%hd", &carts[i].products.array[j].id);
-            fscanf(file, "%hd", &carts[i].products.array[j].stock);
-            fscanf(file, "%s", carts[i].products.array[j].name);
+            fscanf(file, "%hd", &carts[i].pArray[j].id);
+            fscanf(file, "%hd", &carts[i].pArray[j].stock);
+            fscanf(file, "%s", carts[i].pArray[j].name);
         }
     }
     fclose(file);
     if (i <= 1)
         initCarts(carts);
     key_t cartsKey = ftok("CartsKey", 'a');
-    int shmid = shmget(cartsKey, sizeof(cart) * i, IPC_CREAT | 0600);
+    int shmid = shmget(cartsKey, (sizeof(cart) * ++i ) + ((len - 1) * sizeof(product)), IPC_CREAT | 0600);
     cart *shmCarts = (cart *)shmat(shmid, 0, 0);
-    for (j = 0; j < i; j++)
-        shmCarts[j] = carts[j];
+    for (j = 0; j < i; j++){
+        shmCarts[j].clientId = carts[j].clientId;
+        shmCarts[j].length = carts[j].length;
+        for (k = 0; k < carts[i].length; k++) {
+            shmCarts[j].pArray[k].id = carts[j].pArray[k].id;
+            shmCarts[j].pArray[k].stock = carts[j].pArray[k].stock;
+            strcpy(shmCarts[j].pArray[k].name, carts[j].pArray[k].name);
+        }
+    }
     shmdt(shmCarts);
     puts("LOADED CARTS");
     pthread_exit(NULL);
@@ -217,6 +230,7 @@ void clientLogin()
                 message.mesg_body.id = i;
                 message.mesg_body.cartsKey = cartsSmphrKey;
                 message.mesg_body.catalogKey = catalogSmphrKey;
+                message.mesg_body.catalogLength = catalogLength;
                 break;
             }
             else

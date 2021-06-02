@@ -1,0 +1,3 @@
+/Users/carloshuertagarcia/Documents/CProjects/Proyecto_SO/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/Users/carloshuertagarcia/Documents/CProjects/Proyecto_SO/cmake-build-debug/CMakeFiles/edit_cache.dir
+/Users/carloshuertagarcia/Documents/CProjects/Proyecto_SO/cmake-build-debug/CMakeFiles/Proyecto_SO.dir

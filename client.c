@@ -12,9 +12,9 @@
 #include <sys/stat.h>
 #include "store.h"
 
-key_t cartsSmphrKey, catalogSmphrKey, controlKey;
+key_t cartsSmphrKey, catalogSmphrKey;
 semaphore cartsSmphr, catalogSmphr;
-int cId;
+int cId, catalogLength;
 cart clientCart;
 bool logged = false;
 
@@ -31,42 +31,35 @@ void login(const char *mail, const char *pswd)
     msgsnd(msgid2, &message2, sizeof(message2), 0);
     controlKey = ftok("ControlKey", 65);
     msgid = msgget(controlKey, 0666 | IPC_CREAT);
-    puts("RECEIVING");
     msgrcv(msgid, &message, sizeof(message), 2, 0);
-    printf("Data Received is : %d \n", message.mesg_body.login);
     logged = message.mesg_body.login;
     if (logged)
     {
         cId = message.mesg_body.id;
         catalogSmphrKey = message.mesg_body.catalogKey;
         cartsSmphrKey = message.mesg_body.cartsKey;
+        catalogLength = message.mesg_body.catalogLength;
     }
     msgctl(msgid, IPC_RMID, NULL);
 }
 
 void showCatalog()
 {
-    puts("SHOWING CATALOG");
     unsigned short i;
     down(catalogSmphr);
-    puts("DOWN SEMAPHORE");
-    key_t catalogKey = ftok("CatalogKey", 'b');
-    int shmid = shmget(catalogKey, sizeof(productArray), IPC_CREAT | 0600);
-    puts("SHARED MEMORY ID");
-    productArray *catalog = (productArray *)shmat(shmid, 0, 0);
-    puts("SHARED MEMORY");
-    if (catalog->length == 0)
+    key_t catalogKey = ftok("CatalogKey", 'a');
+    int shmid = shmget(catalogKey, sizeof(product) * catalogLength, IPC_CREAT | 0600);
+    product *catalog = (product *)shmat(shmid, NULL, 0);
+    if (catalogLength == 0)
     {
         printf("\nCatálogo de productos vacío, vuelva pronto\n");
         up(catalogSmphr);
         exit(0);
     }
     printf("\nCatálogo de productos:\n");
-    for (i = 0; i < catalog->length; i++)
-        if (catalog->array[i].stock > 0)
-            printf("Número: %d\tNombre del producto: %s\n",
-                    catalog->array[i].id, catalog->array[i].name);
-    shmdt(catalog);
+    for (i = 0; i < catalogLength; i++)
+        if (catalog[i].stock > 0) printf("Número: %d\tNombre del producto: %s\n",
+                    catalog[i].id, catalog[i].name);
     up(catalogSmphr);
 }
 
@@ -89,15 +82,15 @@ void getCart()
     cart *carts = (cart *)shmat(shmid, 0, 0);
     clientCart = carts[cId];
     printf("\nSu carrito de compras:\n");
-    if (clientCart.products.length)
+    if (clientCart.length)
     {
         printf("Su carrito de compras está vacío\n");
         return;
     }
-    for (i = 0; i < clientCart.products.length; i++)
+    for (i = 0; i < clientCart.length; i++)
     {
         printf("Nombre del producto: %s\nCantidad: %d\n",
-                clientCart.products.array[i].name, clientCart.products.array[i].stock);
+                clientCart.pArray[i].name, clientCart.pArray[i].stock);
     }
     up(cartsSmphr);
 }

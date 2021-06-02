@@ -11,44 +11,50 @@
 #include <sys/stat.h>
 #include "store.h"
 
+int *len;
 key_t catalogSmphrKey;
 semaphore catalogSmphr;
 bool isEmptyCatalog;
-productArray *catalog, aux;
+product *catalog, *aux;
 
 void getCatalog() {
     unsigned short i;
     down(catalogSmphr);
-    puts("PROVIDER");
-    key_t catalogKey = ftok("CatalogKey", 'b');
-    int shmid = shmget(catalogKey, sizeof(productArray), IPC_CREAT | 0600);
-    catalog = (productArray*)shmat(shmid, 0, 0);
-    createProductArray(&aux, 0);
-    aux = *catalog;
+    key_t providerKey = ftok("ProviderKey", 'p');
+    int shmid2 = shmget(providerKey, sizeof(int), IPC_CREAT | 0600);
+    len = (int*)shmat(shmid2, NULL, SHM_RDONLY);
+    printf("CATALOG LENGTH: %d\n", *len);
+    key_t catalogKey = ftok("CatalogKey", 'a');
+    int shmid = shmget(catalogKey, (*len) * sizeof(product), IPC_CREAT | 0600);
+    catalog = (product*)shmat(shmid, NULL, 0);
+    aux = initProductArray(*len);
+    for(i = 0; i < *len; i++) {
+        aux[i].id = catalog[i].id;
+        aux[i].stock = catalog[i].stock;
+        strcpy(aux[i].name, catalog[i].name);
+    }
     up(catalogSmphr);
-    isEmptyCatalog = catalog->length == 0;
+    isEmptyCatalog = *len == 0;
 }
 
 void updateCatalog() {
-    down(catalogSmphr);
-    *catalog = aux;
+    //aqui se actualiza la memoria compartida (tal vez)
     FILE *file;
     const char *fileName = "Catalog";
     if ((file = fopen(fileName, "w")) == NULL) fprintf(stderr, "Error al crear el archivo");
     unsigned short i;
-    fprintf(file, "%hd", catalog->length);
+    fprintf(file, "%d", *len);
     fputs("\n", file);
-    for (i = 0; i < catalog->length; i++){
-        fprintf(file, "%hd", catalog->array[i].id);
+    for (i = 0; i < *len; i++){
+        fprintf(file, "%hd", catalog[i].id);
         fputs("\n", file);
-        fprintf(file, "%hd", catalog->array[i].stock);
+        fprintf(file, "%hd", catalog[i].stock);
         fputs("\n", file);
-        fprintf(file, "%s", catalog->array[i].name);
-        if (i != catalog->length - 1)
+        fprintf(file, "%s", catalog[i].name);
+        if (i != *len - 1)
             fputs("\n", file);
     }
     fclose(file);
-    up(catalogSmphr);
 }
 
 void addProduct(unsigned short sku, const char *name, unsigned short stock) {
@@ -56,7 +62,7 @@ void addProduct(unsigned short sku, const char *name, unsigned short stock) {
     p.id = sku;
     strcpy(p.name, name);
     p.stock = stock;
-    pushProduct(&aux, p);
+    pushProduct(aux, len, p);
     if(isEmptyCatalog) isEmptyCatalog = false;
     updateCatalog();
 }
@@ -65,10 +71,10 @@ void getProduct(unsigned short sku) {
     unsigned short i;
     bool found = false;
     down(catalogSmphr);
-    for(i = 0; i < catalog->length; i++)
-        if(catalog->array[i].id == sku){
+    for(i = 0; i < *len; i++)
+        if(catalog[i].id == sku){
             printf("\nProducto encontrado:\nNúmero: %d\tNombre del producto: %s\tExistencia: %d\n",
-                    catalog->array[i].id, catalog->array[i].name, catalog->array[i].stock);
+                    catalog[i].id, catalog[i].name, catalog[i].stock);
             found = true;
             return;
         }
@@ -80,11 +86,11 @@ void addStock(unsigned short sku, unsigned short stock){
     unsigned short i;
     bool found = false;
     down(catalogSmphr);
-    for(i = 0; i < catalog->length; i++)
-        if(catalog->array[i].id == sku){
-            catalog->array[i].stock = stock;
+    for(i = 0; i < *len; i++)
+        if(catalog[i].id == sku){
+            catalog[i].stock = stock;
             printf("\nSe han agregado las existencias:\nNúmero: %d\tNombre del producto: %s\tExistencia: %d\n",
-                    catalog->array[i].id, catalog->array[i].name, catalog->array[i].stock);
+                    catalog[i].id, catalog[i].name, catalog[i].stock);
             found = true;
             return;
         }
