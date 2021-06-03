@@ -97,7 +97,7 @@ void updateCarts()
         fprintf(file, "%hd", cIds[i]);
         fputs("\n", file);
         fprintf(file, "%hd", cLengths[i]);
-        if(cLengths[i] != 0 && i != 5) fputs("\n", file);
+        if(cLengths[i] && i != 5) fputs("\n", file);
         for(j = 0; j < cLengths[i]; j++, k++) {
             fprintf(file, "%hd", pArray[k].id);
             fputs("\n", file);
